@@ -131,3 +131,65 @@ export class Workout extends Realm.Object<Workout> {
     },
   };
 }
+
+export class HealthSnapshot extends Realm.Object<HealthSnapshot> {
+  _id!: string;
+  userId!: string;
+  date!: string;
+  steps!: number;
+  calories!: number;
+  activeMinutes!: number;
+  heartRateAvg?: number;
+  heartRateMin?: number;
+  heartRateMax?: number;
+  deviceId!: string;
+  versionVector!: string;
+  lastModifiedBy!: string;
+  lastModifiedAt!: Date;
+
+  static schema: Realm.ObjectSchema = {
+    name: 'HealthSnapshot',
+    primaryKey: '_id',
+    properties: {
+      _id: 'string',
+      userId: { type: 'string', indexed: true },
+      date: { type: 'string', indexed: true },
+      steps: { type: 'int', default: 0 },
+      calories: { type: 'int', default: 0 },
+      activeMinutes: { type: 'int', default: 0 },
+      heartRateAvg: 'int?',
+      heartRateMin: 'int?',
+      heartRateMax: 'int?',
+      deviceId: 'string',
+      versionVector: 'string',
+      lastModifiedBy: 'string',
+      lastModifiedAt: 'date',
+    },
+  };
+}
+
+export class SyncLog extends Realm.Object<SyncLog> {
+  _id!: string;
+  timestamp!: Date;
+  direction!: string;
+  recordsPushed!: number;
+  recordsPulled!: number;
+  conflicts!: number;
+  status!: string;
+  errorMessage?: string;
+
+  static schema: Realm.ObjectSchema = {
+    name: 'SyncLog',
+    primaryKey: '_id',
+    properties: {
+      _id: 'string',
+      timestamp: 'date',
+      direction: 'string',
+      recordsPushed: { type: 'int', default: 0 },
+      recordsPulled: { type: 'int', default: 0 },
+      conflicts: { type: 'int', default: 0 },
+      status: 'string',
+      errorMessage: 'string?',
+    },
+  };
+}
