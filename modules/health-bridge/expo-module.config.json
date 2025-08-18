@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["HealthBridgeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.healthbridge.HealthBridgeModule"]
+  }
+}
