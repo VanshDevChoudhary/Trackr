@@ -18,3 +18,13 @@ export const registerBody = z.object({
   name: z.string().optional(),
   deviceId: z.string().min(1),
 });
+
+export const loginBody = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(1),
+  deviceId: z.string().min(1),
+});
+
+export const refreshBody = z.object({
+  refreshToken: z.string().min(1),
+});
