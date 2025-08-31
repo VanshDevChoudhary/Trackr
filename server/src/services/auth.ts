@@ -42,3 +42,25 @@ export async function register(email: string, password: string, deviceId: string
     refreshToken,
   };
 }
+
+export async function login(email: string, password: string, deviceId: string) {
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) throw new AppError('Invalid credentials', 401);
+
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) throw new AppError('Invalid credentials', 401);
+
+  if (!user.deviceIds.includes(deviceId)) {
+    user.deviceIds.push(deviceId);
+    await user.save();
+  }
+
+  const accessToken = signAccessToken(user._id.toString(), deviceId);
+  const refreshToken = await issueRefreshToken(user._id, deviceId);
+
+  return {
+    user: { id: user._id, email: user.email, name: user.name },
+    accessToken,
+    refreshToken,
+  };
+}
