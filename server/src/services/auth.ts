@@ -64,3 +64,22 @@ export async function login(email: string, password: string, deviceId: string) {
     refreshToken,
   };
 }
+
+export async function refreshTokens(incoming: string) {
+  const hashed = hashToken(incoming);
+  const stored = await RefreshToken.findOneAndDelete({ token: hashed });
+
+  if (!stored) {
+    // TODO: full reuse detection needs token families — for now just reject
+    throw new AppError('Invalid refresh token', 401);
+  }
+
+  if (stored.expiresAt < new Date()) {
+    throw new AppError('Refresh token expired', 401);
+  }
+
+  const accessToken = signAccessToken(stored.userId.toString(), stored.deviceId);
+  const refreshToken = await issueRefreshToken(stored.userId, stored.deviceId);
+
+  return { accessToken, refreshToken };
+}
