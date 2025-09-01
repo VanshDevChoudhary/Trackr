@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, registerBody, loginBody } from '../middleware/validate';
+import { validate, registerBody, loginBody, refreshBody } from '../middleware/validate';
 import { wrap } from '../middleware/error';
 import * as authService from '../services/auth';
 
@@ -14,6 +14,11 @@ router.post('/auth/register', validate(registerBody), wrap(async (req, res) => {
 router.post('/auth/login', validate(loginBody), wrap(async (req, res) => {
   const { email, password, deviceId } = req.body;
   const result = await authService.login(email, password, deviceId);
+  res.json(result);
+}));
+
+router.post('/auth/refresh', validate(refreshBody), wrap(async (req, res) => {
+  const result = await authService.refreshTokens(req.body.refreshToken);
   res.json(result);
 }));
 
