@@ -3,6 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import healthRouter from './routes/health';
+import authRouter from './routes/auth';
+import userRouter from './routes/user';
+import { errorHandler } from './middleware/error';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +15,10 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/v1', healthRouter);
+app.use('/api/v1', authRouter);
+app.use('/api/v1', userRouter);
+
+app.use(errorHandler);
 
 async function start() {
   try {
