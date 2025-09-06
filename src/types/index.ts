@@ -5,7 +5,7 @@ export type HealthReading = {
   source: 'healthkit' | 'healthconnect' | 'manual';
 };
 
-export type SyncStatus = 'idle' | 'pushing' | 'pulling' | 'error';
+export type SyncStatus = 'idle' | 'pushing' | 'pulling' | 'resolving' | 'error' | 'offline';
 
 export type SyncDirection = 'push' | 'pull';
 
