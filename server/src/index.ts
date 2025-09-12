@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import userRouter from './routes/user';
+import syncRouter from './routes/sync';
 import { errorHandler } from './middleware/error';
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/v1', healthRouter);
 app.use('/api/v1', authRouter);
 app.use('/api/v1', userRouter);
+app.use('/api/v1', syncRouter);
 
 app.use(errorHandler);
 
