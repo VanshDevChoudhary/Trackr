@@ -5,6 +5,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View } from 'react-native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import RealmProvider from './src/db/provider';
+import { SyncProvider } from './src/context/SyncContext';
+import SyncBanner from './src/components/SyncBanner';
 import TodayScreen from './src/app/TodayScreen';
 import HabitsScreen from './src/app/HabitsScreen';
 import WorkoutsScreen from './src/app/WorkoutsScreen';
@@ -54,6 +57,17 @@ function MainTabs() {
   );
 }
 
+function MainApp() {
+  return (
+    <RealmProvider>
+      <SyncProvider>
+        <SyncBanner />
+        <MainTabs />
+      </SyncProvider>
+    </RealmProvider>
+  );
+}
+
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
 
@@ -61,7 +75,7 @@ function AppContent() {
     return <View style={{ flex: 1, backgroundColor: '#0a0a0a' }} />;
   }
 
-  return isAuthenticated ? <MainTabs /> : <AuthNavigator />;
+  return isAuthenticated ? <MainApp /> : <AuthNavigator />;
 }
 
 export default function App() {
