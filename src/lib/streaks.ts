@@ -36,6 +36,72 @@ export function isDueOn(date: Date, freq: Frequency, createdAt?: Date): boolean 
   return true;
 }
 
+export function calculateCurrentStreak(
+  completions: string[],
+  frequency: Frequency,
+  createdAt?: Date,
+): number {
+  if (completions.length === 0) return 0;
+
+  const set = new Set(completions);
+  const today = startOfDay(new Date());
+  let date = new Date(today);
+
+  // today isn't over — don't penalize for not completing yet
+  if (!set.has(toDateStr(date))) {
+    date = addDays(date, -1);
+  }
+
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    if (!isDueOn(date, frequency, createdAt)) {
+      date = addDays(date, -1);
+      continue;
+    }
+    if (set.has(toDateStr(date))) {
+      streak++;
+      date = addDays(date, -1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+export function calculateBestStreak(
+  completions: string[],
+  frequency: Frequency,
+  createdAt?: Date,
+): number {
+  if (completions.length === 0) return 0;
+
+  const sorted = [...completions].sort();
+  const set = new Set(sorted);
+  const first = new Date(sorted[0]);
+  const last = new Date(sorted[sorted.length - 1]);
+
+  let best = 0;
+  let current = 0;
+  let date = new Date(first);
+
+  while (date <= last) {
+    if (!isDueOn(date, frequency, createdAt)) {
+      date = addDays(date, 1);
+      continue;
+    }
+    if (set.has(toDateStr(date))) {
+      current++;
+      if (current > best) best = current;
+    } else {
+      current = 0;
+    }
+    date = addDays(date, 1);
+  }
+
+  return best;
+}
+
 export function parseFrequency(raw: string): Frequency {
   try { return JSON.parse(raw); }
   catch { return { type: 'daily' }; }
