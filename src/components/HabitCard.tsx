@@ -1,5 +1,8 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import {
+  View, Text, Pressable, StyleSheet,
+  Animated, PanResponder, Alert,
+} from 'react-native';
 
 type Props = {
   name: string;
@@ -12,16 +15,62 @@ type Props = {
   onDelete: () => void;
 };
 
+const SWIPE_THRESHOLD = -80;
+
 export default function HabitCard({
   name, icon, color, streak, isCompletedToday,
   onPress, onToggle, onDelete,
 }: Props) {
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) =>
+        Math.abs(gs.dx) > 10 && Math.abs(gs.dy) < 20,
+      onPanResponderMove: (_, gs) => {
+        if (gs.dx < 0) translateX.setValue(gs.dx);
+      },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx < SWIPE_THRESHOLD) {
+          Animated.spring(translateX, {
+            toValue: SWIPE_THRESHOLD,
+            useNativeDriver: true,
+          }).start();
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    }),
+  ).current;
+
+  function confirmDelete() {
+    Alert.alert('Delete habit?', `"${name}" will be removed.`, [
+      {
+        text: 'Cancel',
+        onPress: () => {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+        },
+      },
+      { text: 'Delete', style: 'destructive', onPress: onDelete },
+    ]);
+  }
+
   return (
     <View style={styles.wrapper}>
-      <Pressable style={styles.card} onPress={onPress} onLongPress={onDelete}>
+      <Pressable style={styles.deleteZone} onPress={confirmDelete}>
+        <Text style={styles.deleteText}>Delete</Text>
+      </Pressable>
+
+      <Animated.View
+        style={[styles.card, { transform: [{ translateX }] }]}
+        {...panResponder.panHandlers}
+      >
         <View style={[styles.colorBar, { backgroundColor: color }]} />
 
-        <View style={styles.content}>
+        <Pressable style={styles.content} onPress={onPress}>
           <Text style={styles.icon}>{icon}</Text>
           <View style={styles.info}>
             <Text style={styles.name}>{name}</Text>
@@ -29,7 +78,7 @@ export default function HabitCard({
               <Text style={styles.streak}>{streak} day streak</Text>
             )}
           </View>
-        </View>
+        </Pressable>
 
         <Pressable style={styles.toggle} onPress={onToggle}>
           <View
@@ -41,7 +90,7 @@ export default function HabitCard({
             {isCompletedToday && <Text style={styles.check}>✓</Text>}
           </View>
         </Pressable>
-      </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -49,6 +98,23 @@ export default function HabitCard({
 const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 10,
+    position: 'relative',
+  },
+  deleteZone: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    backgroundColor: '#dc2626',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
   card: {
     flexDirection: 'row',
