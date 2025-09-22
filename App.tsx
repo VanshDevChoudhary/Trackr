@@ -10,6 +10,8 @@ import { SyncProvider } from './src/context/SyncContext';
 import SyncBanner from './src/components/SyncBanner';
 import TodayScreen from './src/app/TodayScreen';
 import HabitsScreen from './src/app/HabitsScreen';
+import HabitFormScreen from './src/app/HabitFormScreen';
+import HabitDetailScreen from './src/app/HabitDetailScreen';
 import WorkoutsScreen from './src/app/WorkoutsScreen';
 import ProfileScreen from './src/app/ProfileScreen';
 import LoginScreen from './src/app/LoginScreen';
@@ -17,6 +19,7 @@ import RegisterScreen from './src/app/RegisterScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
+const HabitsNav = createNativeStackNavigator();
 
 const tabIcons: Record<string, string> = {
   Today: '📋',
@@ -27,6 +30,16 @@ const tabIcons: Record<string, string> = {
 
 function TabIcon({ name, color }: { name: string; color: string }) {
   return <Text style={{ fontSize: 20, color }}>{tabIcons[name] ?? '?'}</Text>;
+}
+
+function HabitsNavigator() {
+  return (
+    <HabitsNav.Navigator screenOptions={{ headerShown: false }}>
+      <HabitsNav.Screen name="HabitsList" component={HabitsScreen} />
+      <HabitsNav.Screen name="HabitForm" component={HabitFormScreen} />
+      <HabitsNav.Screen name="HabitDetail" component={HabitDetailScreen} />
+    </HabitsNav.Navigator>
+  );
 }
 
 function AuthNavigator() {
@@ -50,7 +63,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Today" component={TodayScreen} />
-      <Tab.Screen name="Habits" component={HabitsScreen} />
+      <Tab.Screen name="Habits" component={HabitsNavigator} />
       <Tab.Screen name="Workouts" component={WorkoutsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
