@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { Habit, HabitCompletion } from '../db/schema';
 import { calculateCurrentStreak, calculateBestStreak, parseFrequency } from '../lib/streaks';
+import StreakCalendar from '../components/StreakCalendar';
 
 export default function HabitDetailScreen({ route, navigation }: any) {
   const { habitId } = route.params as { habitId: string };
@@ -31,6 +32,17 @@ export default function HabitDetailScreen({ route, navigation }: any) {
 
   const currentStreak = calculateCurrentStreak(completionDates, frequency, habit.createdAt);
   const bestStreak = calculateBestStreak(completionDates, frequency, habit.createdAt);
+
+  const recentCompletions: Array<{ id: string; date: string; time: string }> = [];
+  const limit = Math.min(allCompletions.length, 15);
+  for (let i = 0; i < limit; i++) {
+    const c = allCompletions[i];
+    recentCompletions.push({
+      id: c._id,
+      date: c.date,
+      time: c.completedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    });
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -64,6 +76,26 @@ export default function HabitDetailScreen({ route, navigation }: any) {
           <Text style={styles.statLabel}>Total</Text>
         </View>
       </View>
+
+      <Text style={styles.sectionTitle}>Last 3 Months</Text>
+      <View style={styles.calendarWrap}>
+        <StreakCalendar
+          completions={completionDates}
+          frequency={frequency}
+          createdAt={habit.createdAt}
+        />
+      </View>
+
+      <Text style={styles.sectionTitle}>Recent</Text>
+      {recentCompletions.map((c) => (
+        <View key={c.id} style={styles.recentRow}>
+          <Text style={styles.recentDate}>{c.date}</Text>
+          <Text style={styles.recentTime}>{c.time}</Text>
+        </View>
+      ))}
+      {allCompletions.length === 0 && (
+        <Text style={styles.emptyText}>No completions yet</Text>
+      )}
     </ScrollView>
   );
 }
@@ -140,5 +172,42 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
+  },
+  sectionTitle: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  calendarWrap: {
+    backgroundColor: '#161616',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    marginBottom: 28,
+  },
+  recentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  recentDate: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  recentTime: {
+    color: '#666',
+    fontSize: 14,
+  },
+  emptyText: {
+    color: '#555',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingVertical: 20,
   },
 });
