@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { useQuery, useRealm } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { Habit, HabitCompletion } from '../db/schema';
-import { toDateStr } from '../lib/streaks';
+import { createRecord, softDelete } from '../db/writeHelper';
+import { getDeviceId } from '../lib/api';
+import { calculateCurrentStreak, parseFrequency, toDateStr } from '../lib/streaks';
 import HabitCard from '../components/HabitCard';
 
 export default function HabitsScreen({ navigation }: any) {
@@ -19,23 +21,63 @@ export default function HabitsScreen({ navigation }: any) {
     c.filtered('userId == $0 AND date == $1', user!.id, todayStr),
   );
 
+  const allCompletions = useQuery(HabitCompletion, (c) =>
+    c.filtered('userId == $0', user!.id),
+  );
+
+  // build lookup maps each render — cheap for habit-scale data
   const todayCompleted = new Set<string>();
   for (const c of todayCompletions) todayCompleted.add(c.habitId);
 
+  const completionsByHabit = new Map<string, string[]>();
+  for (const c of allCompletions) {
+    const arr = completionsByHabit.get(c.habitId) ?? [];
+    arr.push(c.date);
+    completionsByHabit.set(c.habitId, arr);
+  }
+
+  const handleToggle = useCallback(async (habitId: string) => {
+    const existing = realm
+      .objects(HabitCompletion)
+      .filtered('habitId == $0 AND date == $1', habitId, todayStr);
+
+    if (existing.length > 0) {
+      // TODO: hard delete doesn't propagate via sync — revisit when sync supports tombstones
+      realm.write(() => realm.delete(existing[0]));
+    } else {
+      const deviceId = await getDeviceId();
+      await createRecord(realm, HabitCompletion, {
+        habitId,
+        userId: user!.id,
+        date: todayStr,
+        completedAt: new Date(),
+        deviceId,
+      });
+    }
+  }, [realm, user, todayStr]);
+
+  const handleDelete = useCallback(async (habitId: string) => {
+    await softDelete(realm, Habit, habitId);
+  }, [realm]);
+
   const renderHabit = useCallback(({ item }: { item: Habit }) => {
+    const freq = parseFrequency(item.frequency);
+    const dates = completionsByHabit.get(item._id) ?? [];
+    const streak = calculateCurrentStreak(dates, freq, item.createdAt);
+
     return (
       <HabitCard
         name={item.name}
         icon={item.icon}
         color={item.color}
-        streak={0}
+        streak={streak}
         isCompletedToday={todayCompleted.has(item._id)}
         onPress={() => navigation.navigate('HabitDetail', { habitId: item._id })}
-        onToggle={() => {}}
-        onDelete={() => {}}
+        onToggle={() => handleToggle(item._id)}
+        onDelete={() => handleDelete(item._id)}
       />
     );
-  }, [todayCompleted, navigation]);
+  }, [completionsByHabit, todayCompleted, navigation, handleToggle, handleDelete]);
 
   return (
     <View style={styles.container}>
