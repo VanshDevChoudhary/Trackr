@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { healthBridge } from '../bridges/HealthBridge';
 import { useAuth } from '../context/AuthContext';
 import { Habit, HabitCompletion } from '../db/schema';
+import { createRecord } from '../db/writeHelper';
+import { getDeviceId } from '../lib/api';
 import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
 
 export default function TodayScreen() {
@@ -24,6 +26,7 @@ export default function TodayScreen() {
     c.filtered('userId == $0 AND date == $1', user!.id, todayStr),
   );
 
+  // filter to habits due today
   const dueToday: Habit[] = [];
   for (const h of habits) {
     const freq = parseFrequency(h.frequency);
@@ -54,6 +57,25 @@ export default function TodayScreen() {
     const granted = await healthBridge.requestPermissions();
     setPermGranted(granted);
   }
+
+  const handleToggle = useCallback(async (habitId: string) => {
+    const existing = realm
+      .objects(HabitCompletion)
+      .filtered('habitId == $0 AND date == $1', habitId, todayStr);
+
+    if (existing.length > 0) {
+      realm.write(() => realm.delete(existing[0]));
+    } else {
+      const deviceId = await getDeviceId();
+      await createRecord(realm, HabitCompletion, {
+        habitId,
+        userId: user!.id,
+        date: todayStr,
+        completedAt: new Date(),
+        deviceId,
+      });
+    }
+  }, [realm, user, todayStr]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
@@ -96,7 +118,11 @@ export default function TodayScreen() {
           {dueToday.map((h) => {
             const done = completedIds.has(h._id);
             return (
-              <View key={h._id} style={styles.habitRow}>
+              <Pressable
+                key={h._id}
+                style={styles.habitRow}
+                onPress={() => handleToggle(h._id)}
+              >
                 <Text style={styles.habitIcon}>{h.icon}</Text>
                 <Text style={[styles.habitName, done && styles.habitDone]}>{h.name}</Text>
                 <View
@@ -107,7 +133,7 @@ export default function TodayScreen() {
                 >
                   {done && <Text style={styles.checkMark}>✓</Text>}
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>
