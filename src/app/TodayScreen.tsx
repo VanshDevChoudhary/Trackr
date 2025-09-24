@@ -1,11 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useRealm, useQuery } from '@realm/react';
 import { healthBridge } from '../bridges/HealthBridge';
+import { useAuth } from '../context/AuthContext';
+import { Habit, HabitCompletion } from '../db/schema';
+import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
 
 export default function TodayScreen() {
   const [steps, setSteps] = useState(0);
   const [calories, setCalories] = useState(0);
   const [permGranted, setPermGranted] = useState<boolean | null>(null);
+
+  const realm = useRealm();
+  const { user } = useAuth();
+  const todayStr = toDateStr(new Date());
+  const today = new Date();
+
+  const habits = useQuery(Habit, (c) =>
+    c.filtered('isDeleted == false AND userId == $0', user!.id),
+  );
+
+  const todayCompletions = useQuery(HabitCompletion, (c) =>
+    c.filtered('userId == $0 AND date == $1', user!.id, todayStr),
+  );
+
+  const dueToday: Habit[] = [];
+  for (const h of habits) {
+    const freq = parseFrequency(h.frequency);
+    if (isDueOn(today, freq, h.createdAt)) dueToday.push(h);
+  }
+
+  const completedIds = new Set<string>();
+  for (const c of todayCompletions) completedIds.add(c.habitId);
 
   useEffect(() => {
     let unsub: (() => void) | null = null;
@@ -30,7 +56,7 @@ export default function TodayScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
       <Text style={styles.title}>Today</Text>
 
       {permGranted === false && (
@@ -63,7 +89,30 @@ export default function TodayScreen() {
           {permGranted === null ? '...' : permGranted ? 'yes' : 'no'}
         </Text>
       </View>
-    </View>
+
+      {dueToday.length > 0 && (
+        <View style={styles.habitsSection}>
+          <Text style={styles.sectionTitle}>Habits</Text>
+          {dueToday.map((h) => {
+            const done = completedIds.has(h._id);
+            return (
+              <View key={h._id} style={styles.habitRow}>
+                <Text style={styles.habitIcon}>{h.icon}</Text>
+                <Text style={[styles.habitName, done && styles.habitDone]}>{h.name}</Text>
+                <View
+                  style={[
+                    styles.habitCheck,
+                    done && { backgroundColor: h.color, borderColor: h.color },
+                  ]}
+                >
+                  {done && <Text style={styles.checkMark}>✓</Text>}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
@@ -160,5 +209,54 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+  habitsSection: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  habitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#161616',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  habitIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  habitName: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  habitDone: {
+    color: '#888',
+    textDecorationLine: 'line-through',
+  },
+  habitCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
