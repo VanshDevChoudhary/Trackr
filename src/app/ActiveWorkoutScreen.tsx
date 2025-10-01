@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import type { WorkoutType } from '../types';
 import ExerciseInput, { type SetData } from '../components/ExerciseInput';
+import WorkoutTimer from '../components/WorkoutTimer';
 
 type ExerciseState = {
   name: string;
@@ -23,6 +24,8 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
   const [exercises, setExercises] = useState<ExerciseState[]>(
     isStrength ? [{ name: '', sets: [defaultSet()] }] : [],
   );
+  const [timedExerciseName, setTimedExerciseName] = useState('');
+  const elapsedRef = useRef(0);
 
   const addExercise = useCallback(() => {
     setExercises((prev) => [...prev, { name: '', sets: [defaultSet()] }]);
@@ -106,7 +109,7 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
           placeholderTextColor="#555"
         />
 
-        {isStrength && (
+        {isStrength ? (
           <>
             {exercises.map((ex, i) => (
               <ExerciseInput
@@ -124,6 +127,18 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
             <Pressable style={styles.addExercise} onPress={addExercise}>
               <Text style={styles.addExerciseText}>+ Add Exercise</Text>
             </Pressable>
+          </>
+        ) : (
+          <>
+            <WorkoutTimer onElapsed={(s) => { elapsedRef.current = s; }} />
+
+            <TextInput
+              style={styles.timedInput}
+              value={timedExerciseName}
+              onChangeText={setTimedExerciseName}
+              placeholder="What are you doing? (e.g. Running)"
+              placeholderTextColor="#555"
+            />
           </>
         )}
       </ScrollView>
@@ -186,5 +201,14 @@ const styles = StyleSheet.create({
     color: '#7c83ff',
     fontSize: 15,
     fontWeight: '500',
+  },
+  timedInput: {
+    backgroundColor: '#161616',
+    borderRadius: 12,
+    color: '#fff',
+    fontSize: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#222',
   },
 });
