@@ -1,8 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, KeyboardAvoidingView, Platform,
+  Pressable, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { useRealm } from '@realm/react';
+import { useAuth } from '../context/AuthContext';
+import { createRecord } from '../db/writeHelper';
+import { getDeviceId } from '../lib/api';
+import { Workout } from '../db/schema';
 import type { WorkoutType } from '../types';
 import ExerciseInput, { type SetData } from '../components/ExerciseInput';
 import WorkoutTimer from '../components/WorkoutTimer';
@@ -16,6 +21,8 @@ const defaultSet = (): SetData => ({ reps: '', weight: '', completed: false });
 
 export default function ActiveWorkoutScreen({ route, navigation }: any) {
   const { type } = route.params as { type: WorkoutType };
+  const realm = useRealm();
+  const { user } = useAuth();
 
   const isStrength = type === 'strength';
   const startedAt = useRef(new Date()).current;
@@ -75,6 +82,65 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
     });
   }, []);
 
+  async function finishWorkout() {
+    const deviceId = await getDeviceId();
+    const now = new Date();
+    const duration = isStrength
+      ? Math.floor((now.getTime() - startedAt.getTime()) / 1000)
+      : elapsedRef.current;
+
+    const exerciseData = isStrength
+      ? exercises
+          .filter((e) => e.name.trim())
+          .map((e) => ({
+            name: e.name.trim(),
+            sets: e.sets
+              .filter((s) => s.reps || s.weight)
+              .map((s) => ({
+                reps: parseInt(s.reps, 10) || 0,
+                weight: parseFloat(s.weight) || 0,
+                completed: s.completed,
+              })),
+          }))
+      : timedExerciseName.trim()
+        ? [{ name: timedExerciseName.trim(), sets: [], durationSeconds: elapsedRef.current }]
+        : [];
+
+    if (exerciseData.length === 0) {
+      Alert.alert('Nothing to save', 'Add at least one exercise');
+      return;
+    }
+
+    const typeLabels: Record<WorkoutType, string> = {
+      strength: 'Strength',
+      cardio: 'Cardio',
+      flexibility: 'Flexibility',
+    };
+    const name = workoutName.trim() || typeLabels[type];
+
+    await createRecord(realm, Workout, {
+      userId: user!.id,
+      type,
+      name,
+      exercises: exerciseData,
+      durationSeconds: duration,
+      startedAt,
+      source: 'manual',
+      isDeleted: false,
+      deviceId,
+      createdAt: new Date(),
+    });
+
+    navigation.goBack();
+  }
+
+  function confirmFinish() {
+    Alert.alert('Finish workout?', 'This will save your session.', [
+      { text: 'Keep Going', style: 'cancel' },
+      { text: 'Finish', onPress: finishWorkout },
+    ]);
+  }
+
   const typeLabels: Record<WorkoutType, string> = {
     strength: 'Strength',
     cardio: 'Cardio',
@@ -91,7 +157,7 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
           <Text style={styles.cancelText}>Cancel</Text>
         </Pressable>
         <Text style={styles.headerTitle}>{typeLabels[type]}</Text>
-        <Pressable>
+        <Pressable onPress={confirmFinish}>
           <Text style={styles.finishText}>Finish</Text>
         </Pressable>
       </View>
