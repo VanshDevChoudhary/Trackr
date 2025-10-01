@@ -1,9 +1,17 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
   Pressable, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import type { WorkoutType } from '../types';
+import ExerciseInput, { type SetData } from '../components/ExerciseInput';
+
+type ExerciseState = {
+  name: string;
+  sets: SetData[];
+};
+
+const defaultSet = (): SetData => ({ reps: '', weight: '', completed: false });
 
 export default function ActiveWorkoutScreen({ route, navigation }: any) {
   const { type } = route.params as { type: WorkoutType };
@@ -12,6 +20,57 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
   const startedAt = useRef(new Date()).current;
 
   const [workoutName, setWorkoutName] = useState('');
+  const [exercises, setExercises] = useState<ExerciseState[]>(
+    isStrength ? [{ name: '', sets: [defaultSet()] }] : [],
+  );
+
+  const addExercise = useCallback(() => {
+    setExercises((prev) => [...prev, { name: '', sets: [defaultSet()] }]);
+  }, []);
+
+  const removeExercise = useCallback((idx: number) => {
+    setExercises((prev) => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const updateExerciseName = useCallback((idx: number, val: string) => {
+    setExercises((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], name: val };
+      return next;
+    });
+  }, []);
+
+  const updateSet = useCallback((exIdx: number, setIdx: number, field: keyof SetData, val: string | boolean) => {
+    setExercises((prev) => {
+      const next = [...prev];
+      const ex = { ...next[exIdx] };
+      const sets = [...ex.sets];
+      sets[setIdx] = { ...sets[setIdx], [field]: val };
+      ex.sets = sets;
+      next[exIdx] = ex;
+      return next;
+    });
+  }, []);
+
+  const addSet = useCallback((exIdx: number) => {
+    setExercises((prev) => {
+      const next = [...prev];
+      const ex = { ...next[exIdx] };
+      ex.sets = [...ex.sets, defaultSet()];
+      next[exIdx] = ex;
+      return next;
+    });
+  }, []);
+
+  const removeSet = useCallback((exIdx: number, setIdx: number) => {
+    setExercises((prev) => {
+      const next = [...prev];
+      const ex = { ...next[exIdx] };
+      ex.sets = ex.sets.filter((_, i) => i !== setIdx);
+      next[exIdx] = ex;
+      return next;
+    });
+  }, []);
 
   const typeLabels: Record<WorkoutType, string> = {
     strength: 'Strength',
@@ -46,6 +105,27 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
           placeholder={`${typeLabels[type]} Workout`}
           placeholderTextColor="#555"
         />
+
+        {isStrength && (
+          <>
+            {exercises.map((ex, i) => (
+              <ExerciseInput
+                key={i}
+                name={ex.name}
+                sets={ex.sets}
+                onNameChange={(v) => updateExerciseName(i, v)}
+                onSetChange={(si, f, v) => updateSet(i, si, f, v)}
+                onAddSet={() => addSet(i)}
+                onRemoveSet={(si) => removeSet(i, si)}
+                onRemove={() => removeExercise(i)}
+              />
+            ))}
+
+            <Pressable style={styles.addExercise} onPress={addExercise}>
+              <Text style={styles.addExerciseText}>+ Add Exercise</Text>
+            </Pressable>
+          </>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -92,5 +172,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#222',
+  },
+  addExercise: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2a2a3a',
+    borderStyle: 'dashed',
+  },
+  addExerciseText: {
+    color: '#7c83ff',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });
