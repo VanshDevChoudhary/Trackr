@@ -81,6 +81,50 @@ export default function WorkoutDetailScreen({ route, navigation }: any) {
           <Text style={styles.statLabel}>Source</Text>
         </View>
       </View>
+
+      {workout.exercises.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Exercises</Text>
+          {workout.exercises.map((exercise, exIdx) => (
+            <View key={exIdx} style={styles.exerciseCard}>
+              <Text style={styles.exerciseName}>{exercise.name}</Text>
+
+              {exercise.durationSeconds != null && exercise.durationSeconds > 0 && (
+                <Text style={styles.exerciseDuration}>
+                  {formatDuration(exercise.durationSeconds)}
+                </Text>
+              )}
+
+              {exercise.sets.length > 0 && (
+                <View style={styles.setsTable}>
+                  <View style={styles.setsHeader}>
+                    <Text style={[styles.colHeader, { width: 36 }]}>Set</Text>
+                    <Text style={[styles.colHeader, { flex: 1 }]}>Reps</Text>
+                    <Text style={[styles.colHeader, { flex: 1 }]}>Weight</Text>
+                    <Text style={[styles.colHeader, { width: 36 }]}>✓</Text>
+                  </View>
+                  {exercise.sets.map((set, setIdx) => (
+                    <View key={setIdx} style={styles.setRow}>
+                      <Text style={[styles.setCell, { width: 36 }]}>{setIdx + 1}</Text>
+                      <Text style={[styles.setCell, { flex: 1 }]}>{set.reps}</Text>
+                      <Text style={[styles.setCell, { flex: 1 }]}>
+                        {set.weight > 0 ? `${set.weight} kg` : '—'}
+                      </Text>
+                      <Text style={[styles.setCell, { width: 36 }]}>
+                        {set.completed ? '✓' : ''}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {exercise.notes && (
+                <Text style={styles.notes}>{exercise.notes}</Text>
+              )}
+            </View>
+          ))}
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -146,5 +190,64 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
+  },
+  sectionTitle: {
+    color: '#888',
+    fontSize: 13,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  exerciseCard: {
+    backgroundColor: '#161616',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  exerciseName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  exerciseDuration: {
+    color: '#7c83ff',
+    fontSize: 14,
+  },
+  setsTable: {
+    marginTop: 4,
+  },
+  setsHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+    paddingBottom: 6,
+    marginBottom: 4,
+  },
+  colHeader: {
+    color: '#666',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  setRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  setCell: {
+    color: '#ccc',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  notes: {
+    color: '#888',
+    fontSize: 13,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });
