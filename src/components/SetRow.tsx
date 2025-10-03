@@ -40,6 +40,7 @@ export default function SetRow({
         keyboardType="decimal-pad"
         returnKeyType="done"
       />
+      {/* TODO: pull unit from user preferences (kg/lbs) */}
       <Text style={styles.label}>kg</Text>
 
       <Pressable onPress={onToggle} style={styles.checkWrap}>
