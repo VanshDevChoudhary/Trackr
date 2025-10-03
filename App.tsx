@@ -13,6 +13,8 @@ import HabitsScreen from './src/app/HabitsScreen';
 import HabitFormScreen from './src/app/HabitFormScreen';
 import HabitDetailScreen from './src/app/HabitDetailScreen';
 import WorkoutsScreen from './src/app/WorkoutsScreen';
+import ActiveWorkoutScreen from './src/app/ActiveWorkoutScreen';
+import WorkoutDetailScreen from './src/app/WorkoutDetailScreen';
 import ProfileScreen from './src/app/ProfileScreen';
 import LoginScreen from './src/app/LoginScreen';
 import RegisterScreen from './src/app/RegisterScreen';
@@ -20,6 +22,7 @@ import RegisterScreen from './src/app/RegisterScreen';
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
 const HabitsNav = createNativeStackNavigator();
+const WorkoutsNav = createNativeStackNavigator();
 
 const tabIcons: Record<string, string> = {
   Today: '📋',
@@ -39,6 +42,16 @@ function HabitsNavigator() {
       <HabitsNav.Screen name="HabitForm" component={HabitFormScreen} />
       <HabitsNav.Screen name="HabitDetail" component={HabitDetailScreen} />
     </HabitsNav.Navigator>
+  );
+}
+
+function WorkoutsNavigator() {
+  return (
+    <WorkoutsNav.Navigator screenOptions={{ headerShown: false }}>
+      <WorkoutsNav.Screen name="WorkoutsList" component={WorkoutsScreen} />
+      <WorkoutsNav.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
+      <WorkoutsNav.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
+    </WorkoutsNav.Navigator>
   );
 }
 
@@ -64,7 +77,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Today" component={TodayScreen} />
       <Tab.Screen name="Habits" component={HabitsNavigator} />
-      <Tab.Screen name="Workouts" component={WorkoutsScreen} />
+      <Tab.Screen name="Workouts" component={WorkoutsNavigator} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
