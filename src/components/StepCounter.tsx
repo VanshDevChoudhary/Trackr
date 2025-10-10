@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 
 type Props = {
   steps: number;
@@ -10,14 +10,24 @@ const RING_SIZE = 180;
 const STROKE = 10;
 
 export default function StepCounter({ steps, goal }: Props) {
+  const displayVal = useRef(new Animated.Value(0)).current;
   const pct = Math.min(steps / goal, 1);
+
+  useEffect(() => {
+    Animated.timing(displayVal, {
+      toValue: steps,
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [steps]);
 
   return (
     <View style={styles.container}>
       <View style={styles.ring}>
         <View style={styles.bgRing} />
         <View style={styles.inner}>
-          <Text style={styles.count}>{steps.toLocaleString()}</Text>
+          <AnimatedNumber value={displayVal} />
           <Text style={styles.label}>steps</Text>
           <Text style={styles.goalText}>
             {Math.round(pct * 100)}% of {goal.toLocaleString()}
@@ -26,6 +36,19 @@ export default function StepCounter({ steps, goal }: Props) {
       </View>
     </View>
   );
+}
+
+function AnimatedNumber({ value }: { value: Animated.Value }) {
+  const [display, setDisplay] = React.useState('0');
+
+  useEffect(() => {
+    const id = value.addListener(({ value: v }) => {
+      setDisplay(Math.round(v).toLocaleString());
+    });
+    return () => value.removeListener(id);
+  }, [value]);
+
+  return <Text style={styles.count}>{display}</Text>;
 }
 
 const styles = StyleSheet.create({
