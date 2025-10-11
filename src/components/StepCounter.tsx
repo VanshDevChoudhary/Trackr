@@ -11,6 +11,8 @@ const STROKE = 10;
 
 export default function StepCounter({ steps, goal }: Props) {
   const displayVal = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
   const pct = Math.min(steps / goal, 1);
 
   useEffect(() => {
@@ -22,10 +24,40 @@ export default function StepCounter({ steps, goal }: Props) {
     }).start();
   }, [steps]);
 
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: pct,
+      duration: 800,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [pct]);
+
+  const progressDeg = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.ring}>
         <View style={styles.bgRing} />
+
+        <Animated.View
+          style={[
+            styles.progressMask,
+            { transform: [{ rotateZ: progressDeg }] },
+          ]}
+        >
+          <View style={styles.progressHalf} />
+        </Animated.View>
+
+        {pct > 0.5 && (
+          <View style={styles.progressMaskFull}>
+            <View style={styles.progressHalf} />
+          </View>
+        )}
+
         <View style={styles.inner}>
           <AnimatedNumber value={displayVal} />
           <Text style={styles.label}>steps</Text>
@@ -70,6 +102,31 @@ const styles = StyleSheet.create({
     borderRadius: RING_SIZE / 2,
     borderWidth: STROKE,
     borderColor: '#1e1e1e',
+  },
+  progressMask: {
+    position: 'absolute',
+    width: RING_SIZE,
+    height: RING_SIZE,
+    borderRadius: RING_SIZE / 2,
+    overflow: 'hidden',
+  },
+  progressMaskFull: {
+    position: 'absolute',
+    width: RING_SIZE,
+    height: RING_SIZE,
+    borderRadius: RING_SIZE / 2,
+    overflow: 'hidden',
+    transform: [{ rotateZ: '180deg' }],
+  },
+  progressHalf: {
+    position: 'absolute',
+    width: RING_SIZE,
+    height: RING_SIZE / 2,
+    borderTopLeftRadius: RING_SIZE / 2,
+    borderTopRightRadius: RING_SIZE / 2,
+    borderWidth: STROKE,
+    borderBottomWidth: 0,
+    borderColor: '#7c83ff',
   },
   inner: {
     width: RING_SIZE - STROKE * 2 - 8,
