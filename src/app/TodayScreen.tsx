@@ -1,16 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { healthBridge } from '../bridges/HealthBridge';
 import { useAuth } from '../context/AuthContext';
-import { Habit, HabitCompletion } from '../db/schema';
-import { createRecord } from '../db/writeHelper';
+import { Habit, HabitCompletion, HealthSnapshot } from '../db/schema';
+import { createRecord, updateRecord } from '../db/writeHelper';
 import { getDeviceId } from '../lib/api';
 import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
+
+function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
 export default function TodayScreen() {
   const [steps, setSteps] = useState(0);
   const [calories, setCalories] = useState(0);
+  const [activeMinutes, setActiveMinutes] = useState(0);
   const [permGranted, setPermGranted] = useState<boolean | null>(null);
 
   const realm = useRealm();
@@ -36,8 +44,33 @@ export default function TodayScreen() {
   const completedIds = new Set<string>();
   for (const c of todayCompletions) completedIds.add(c.habitId);
 
+  const saveSnapshot = useCallback(async (s: number, cal: number) => {
+    const deviceId = await getDeviceId();
+    const existing = realm
+      .objects(HealthSnapshot)
+      .filtered('userId == $0 AND date == $1', user!.id, todayStr);
+
+    if (existing.length > 0) {
+      await updateRecord(realm, HealthSnapshot, existing[0]._id, {
+        steps: s,
+        calories: cal,
+        activeMinutes,
+      });
+    } else {
+      await createRecord(realm, HealthSnapshot, {
+        userId: user!.id,
+        date: todayStr,
+        steps: s,
+        calories: cal,
+        activeMinutes: 0,
+        deviceId,
+      });
+    }
+  }, [realm, user, todayStr, activeMinutes]);
+
   useEffect(() => {
     let unsub: (() => void) | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
     (async () => {
       const granted = await healthBridge.requestPermissions();
@@ -48,10 +81,28 @@ export default function TodayScreen() {
       setCalories(cal);
 
       unsub = healthBridge.subscribeToSteps((s) => setSteps(s));
+
+      // refresh snapshot every 5 min
+      intervalId = setInterval(async () => {
+        const c = await healthBridge.getCalories(new Date());
+        setCalories(c);
+      }, 5 * 60 * 1000);
     })();
 
-    return () => unsub?.();
+    return () => {
+      unsub?.();
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
+
+  // save snapshot when steps change meaningfully
+  const lastSaved = useRef(0);
+  useEffect(() => {
+    if (steps - lastSaved.current > 50 && permGranted) {
+      lastSaved.current = steps;
+      saveSnapshot(steps, calories);
+    }
+  }, [steps]);
 
   async function retryPermissions() {
     const granted = await healthBridge.requestPermissions();
