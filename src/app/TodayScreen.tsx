@@ -143,24 +143,22 @@ export default function TodayScreen() {
         </View>
       )}
 
-      <View style={styles.row}>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Steps</Text>
-          <Text style={styles.cardValue}>{steps.toLocaleString()}</Text>
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statIcon}>👟</Text>
+          <Text style={styles.statValue}>{steps.toLocaleString()}</Text>
+          <Text style={styles.statLabel}>Steps</Text>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Calories</Text>
-          <Text style={styles.cardValue}>{calories.toLocaleString()}</Text>
-          <Text style={styles.cardUnit}>kcal</Text>
+        <View style={styles.statCard}>
+          <Text style={styles.statIcon}>🔥</Text>
+          <Text style={styles.statValue}>{calories.toLocaleString()}</Text>
+          <Text style={styles.statLabel}>Calories</Text>
         </View>
-      </View>
-
-      <View style={styles.statusRow}>
-        <Text style={styles.statusLabel}>Health access</Text>
-        <View style={[styles.dot, { backgroundColor: permGranted ? '#4ade80' : '#f87171' }]} />
-        <Text style={styles.statusValue}>
-          {permGranted === null ? '...' : permGranted ? 'yes' : 'no'}
-        </Text>
+        <View style={styles.statCard}>
+          <Text style={styles.statIcon}>⚡</Text>
+          <Text style={styles.statValue}>{activeMinutes}</Text>
+          <Text style={styles.statLabel}>Active min</Text>
+        </View>
       </View>
 
       {dueToday.length > 0 && (
@@ -206,61 +204,36 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 24,
   },
-  row: {
+  statsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    gap: 10,
+    marginBottom: 24,
   },
-  card: {
+  statCard: {
     flex: 1,
     backgroundColor: '#161616',
     borderRadius: 14,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  cardLabel: {
-    color: '#888',
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  cardValue: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: '700',
-  },
-  cardUnit: {
-    color: '#666',
-    fontSize: 13,
-    marginTop: 2,
-  },
-  statusRow: {
-    flexDirection: 'row',
+    padding: 16,
     alignItems: 'center',
-    backgroundColor: '#161616',
-    borderRadius: 10,
-    padding: 14,
     borderWidth: 1,
     borderColor: '#222',
   },
-  statusLabel: {
-    color: '#888',
-    fontSize: 14,
-    flex: 1,
+  statIcon: {
+    fontSize: 20,
+    marginBottom: 8,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
+  statValue: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
-  statusValue: {
-    color: '#ccc',
-    fontSize: 14,
-    fontWeight: '500',
+  statLabel: {
+    color: '#666',
+    fontSize: 11,
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   permCard: {
     backgroundColor: '#1a1520',
