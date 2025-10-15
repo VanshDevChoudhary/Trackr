@@ -8,8 +8,10 @@ import { createRecord, updateRecord } from '../db/writeHelper';
 import { getDeviceId } from '../lib/api';
 import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
 import StepCounter from '../components/StepCounter';
+import WeeklyStepsChart from '../components/WeeklyStepsChart';
 
 const STEP_GOAL = 8000;
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function daysAgo(n: number): Date {
   const d = new Date();
@@ -44,8 +46,25 @@ export default function TodayScreen() {
     if (isDueOn(today, freq, h.createdAt)) dueToday.push(h);
   }
 
+  const weekSnapshots = useQuery(HealthSnapshot, (c) =>
+    c.filtered('userId == $0 AND date >= $1', user!.id, toDateStr(daysAgo(6))),
+  );
+
   const completedIds = new Set<string>();
   for (const c of todayCompletions) completedIds.add(c.habitId);
+
+  // build weekly chart data
+  const snapshotMap = new Map<string, number>();
+  for (const s of weekSnapshots) snapshotMap.set(s.date, s.steps);
+
+  const weekData = Array.from({ length: 7 }, (_, i) => {
+    const d = daysAgo(6 - i);
+    const key = toDateStr(d);
+    return {
+      label: DAY_LABELS[d.getDay()],
+      steps: snapshotMap.get(key) ?? 0,
+    };
+  });
 
   const saveSnapshot = useCallback(async (s: number, cal: number) => {
     const deviceId = await getDeviceId();
@@ -194,6 +213,12 @@ export default function TodayScreen() {
           })}
         </View>
       )}
+
+      {weekData.some((d) => d.steps > 0) && (
+        <View style={styles.section}>
+          <WeeklyStepsChart data={weekData} goal={STEP_GOAL} />
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -266,6 +291,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+  section: {
+    marginBottom: 24,
   },
   habitsSection: {
     marginTop: 24,
