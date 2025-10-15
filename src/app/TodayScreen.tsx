@@ -7,6 +7,9 @@ import { Habit, HabitCompletion, HealthSnapshot } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 import { getDeviceId } from '../lib/api';
 import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
+import StepCounter from '../components/StepCounter';
+
+const STEP_GOAL = 8000;
 
 function daysAgo(n: number): Date {
   const d = new Date();
@@ -141,6 +144,10 @@ export default function TodayScreen() {
             <Text style={styles.permBtnText}>Grant Access</Text>
           </Pressable>
         </View>
+      )}
+
+      {permGranted !== false && (
+        <StepCounter steps={steps} goal={STEP_GOAL} />
       )}
 
       <View style={styles.statsRow}>
