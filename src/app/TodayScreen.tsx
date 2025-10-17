@@ -150,8 +150,10 @@ export default function TodayScreen() {
     }
   }, [realm, user, todayStr]);
 
+  const completedCount = dueToday.filter((h) => completedIds.has(h._id)).length;
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <Text style={styles.title}>Today</Text>
 
       {permGranted === false && (
@@ -188,8 +190,13 @@ export default function TodayScreen() {
       </View>
 
       {dueToday.length > 0 && (
-        <View style={styles.habitsSection}>
-          <Text style={styles.sectionTitle}>Habits</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Habits</Text>
+            <Text style={styles.sectionCount}>
+              {completedCount}/{dueToday.length}
+            </Text>
+          </View>
           {dueToday.map((h) => {
             const done = completedIds.has(h._id);
             return (
@@ -295,8 +302,11 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
-  habitsSection: {
-    marginTop: 24,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   sectionTitle: {
     color: '#888',
@@ -304,7 +314,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+  },
+  sectionCount: {
+    color: '#555',
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
   },
   habitRow: {
     flexDirection: 'row',
