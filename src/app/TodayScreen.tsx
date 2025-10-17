@@ -229,6 +229,16 @@ function HabitCheckRow({
   onToggle: () => void;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
+  const checkScale = useRef(new Animated.Value(done ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(checkScale, {
+      toValue: done ? 1 : 0,
+      useNativeDriver: true,
+      friction: 4,
+      tension: 200,
+    }).start();
+  }, [done]);
 
   function handlePress() {
     Animated.sequence([
@@ -261,7 +271,16 @@ function HabitCheckRow({
             done && { backgroundColor: habit.color, borderColor: habit.color },
           ]}
         >
-          {done && <Text style={styles.checkMark}>✓</Text>}
+          {done && (
+            <Animated.Text
+              style={[
+                styles.checkMark,
+                { transform: [{ scale: checkScale }] },
+              ]}
+            >
+              ✓
+            </Animated.Text>
+          )}
         </View>
       </Pressable>
     </Animated.View>
