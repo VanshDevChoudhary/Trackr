@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import {
+  View, Text, StyleSheet, Pressable, ScrollView, Animated,
+} from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { healthBridge } from '../bridges/HealthBridge';
 import { useAuth } from '../context/AuthContext';
@@ -197,27 +199,14 @@ export default function TodayScreen() {
               {completedCount}/{dueToday.length}
             </Text>
           </View>
-          {dueToday.map((h) => {
-            const done = completedIds.has(h._id);
-            return (
-              <Pressable
-                key={h._id}
-                style={styles.habitRow}
-                onPress={() => handleToggle(h._id)}
-              >
-                <Text style={styles.habitIcon}>{h.icon}</Text>
-                <Text style={[styles.habitName, done && styles.habitDone]}>{h.name}</Text>
-                <View
-                  style={[
-                    styles.habitCheck,
-                    done && { backgroundColor: h.color, borderColor: h.color },
-                  ]}
-                >
-                  {done && <Text style={styles.checkMark}>✓</Text>}
-                </View>
-              </Pressable>
-            );
-          })}
+          {dueToday.map((h) => (
+            <HabitCheckRow
+              key={h._id}
+              habit={h}
+              done={completedIds.has(h._id)}
+              onToggle={() => handleToggle(h._id)}
+            />
+          ))}
         </View>
       )}
 
@@ -227,6 +216,55 @@ export default function TodayScreen() {
         </View>
       )}
     </ScrollView>
+  );
+}
+
+function HabitCheckRow({
+  habit,
+  done,
+  onToggle,
+}: {
+  habit: Habit;
+  done: boolean;
+  onToggle: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function handlePress() {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.97,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 3,
+        tension: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    onToggle();
+  }
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable style={styles.habitRow} onPress={handlePress}>
+        <Text style={styles.habitIcon}>{habit.icon}</Text>
+        <Text style={[styles.habitName, done && styles.habitDone]}>
+          {habit.name}
+        </Text>
+        <View
+          style={[
+            styles.habitCheck,
+            done && { backgroundColor: habit.color, borderColor: habit.color },
+          ]}
+        >
+          {done && <Text style={styles.checkMark}>✓</Text>}
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -324,7 +362,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#161616',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
@@ -345,9 +383,9 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   habitCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
     borderColor: '#444',
     alignItems: 'center',
@@ -355,7 +393,7 @@ const styles = StyleSheet.create({
   },
   checkMark: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
 });
