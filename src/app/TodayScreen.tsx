@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, Pressable, ScrollView, Animated,
 } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
+import * as Haptics from 'expo-haptics';
 import { healthBridge } from '../bridges/HealthBridge';
 import { useAuth } from '../context/AuthContext';
 import { Habit, HabitCompletion, HealthSnapshot } from '../db/schema';
@@ -140,6 +141,7 @@ export default function TodayScreen() {
 
     if (existing.length > 0) {
       realm.write(() => realm.delete(existing[0]));
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } else {
       const deviceId = await getDeviceId();
       await createRecord(realm, HabitCompletion, {
@@ -149,6 +151,7 @@ export default function TodayScreen() {
         completedAt: new Date(),
         deviceId,
       });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   }, [realm, user, todayStr]);
 
