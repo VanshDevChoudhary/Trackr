@@ -6,7 +6,7 @@ import { useRealm, useQuery } from '@realm/react';
 import * as Haptics from 'expo-haptics';
 import { healthBridge } from '../bridges/HealthBridge';
 import { useAuth } from '../context/AuthContext';
-import { Habit, HabitCompletion, HealthSnapshot } from '../db/schema';
+import { Habit, HabitCompletion, HealthSnapshot, Workout } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 import { getDeviceId } from '../lib/api';
 import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
@@ -48,6 +48,10 @@ export default function TodayScreen() {
     const freq = parseFrequency(h.frequency);
     if (isDueOn(today, freq, h.createdAt)) dueToday.push(h);
   }
+
+  const recentWorkouts = useQuery(Workout, (c) =>
+    c.filtered('isDeleted == false AND userId == $0 SORT(startedAt DESC) LIMIT(3)', user!.id),
+  );
 
   const weekSnapshots = useQuery(HealthSnapshot, (c) =>
     c.filtered('userId == $0 AND date >= $1', user!.id, toDateStr(daysAgo(6))),
@@ -196,7 +200,7 @@ export default function TodayScreen() {
         </View>
       </View>
 
-      {dueToday.length > 0 && (
+      {dueToday.length > 0 ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Habits</Text>
@@ -213,12 +217,32 @@ export default function TodayScreen() {
             />
           ))}
         </View>
-      )}
+      ) : habits.length === 0 ? (
+        <EmptyCard
+          icon="🎯"
+          title="No habits yet"
+          subtitle="Create your first habit to start tracking"
+        />
+      ) : null}
 
-      {weekData.some((d) => d.steps > 0) && (
+      {weekData.some((d) => d.steps > 0) ? (
         <View style={styles.section}>
           <WeeklyStepsChart data={weekData} goal={STEP_GOAL} />
         </View>
+      ) : permGranted && (
+        <EmptyCard
+          icon="📊"
+          title="No step data yet"
+          subtitle="Waiting for health data to populate..."
+        />
+      )}
+
+      {recentWorkouts.length === 0 && (
+        <EmptyCard
+          icon="💪"
+          title="No workouts logged"
+          subtitle="Log a workout to see it here"
+        />
       )}
     </ScrollView>
   );
@@ -289,6 +313,24 @@ function HabitCheckRow({
         </View>
       </Pressable>
     </Animated.View>
+  );
+}
+
+function EmptyCard({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyIcon}>{icon}</Text>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptySubtitle}>{subtitle}</Text>
+    </View>
   );
 }
 
@@ -431,5 +473,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '700',
+  },
+  emptyCard: {
+    backgroundColor: '#161616',
+    borderRadius: 14,
+    padding: 28,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    alignItems: 'center',
+  },
+  emptyIcon: {
+    fontSize: 28,
+    marginBottom: 10,
+  },
+  emptyTitle: {
+    color: '#ccc',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    color: '#666',
+    fontSize: 13,
+    textAlign: 'center',
   },
 });
