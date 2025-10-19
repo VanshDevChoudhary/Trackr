@@ -163,8 +163,10 @@ export default function TodayScreen() {
 
       {permGranted === false && (
         <View style={styles.permCard}>
+          <Text style={styles.permEmoji}>🔒</Text>
+          <Text style={styles.permTitle}>Health data access needed</Text>
           <Text style={styles.permText}>
-            Health data access is needed to show your activity
+            Grant access to see your steps, calories, and activity data on this screen.
           </Text>
           <Pressable style={styles.permBtn} onPress={retryPermissions}>
             <Text style={styles.permBtnText}>Grant Access</Text>
@@ -336,23 +338,35 @@ const styles = StyleSheet.create({
   },
   permCard: {
     backgroundColor: '#1a1520',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+    borderRadius: 14,
+    padding: 24,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: '#332244',
+    alignItems: 'center',
+  },
+  permEmoji: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  permTitle: {
+    color: '#e2d4f0',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   permText: {
-    color: '#c4b5fd',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 12,
+    color: '#a78bba',
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   permBtn: {
     backgroundColor: '#7c83ff',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
   },
   permBtnText: {
     color: '#fff',
