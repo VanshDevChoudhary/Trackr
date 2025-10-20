@@ -101,6 +101,19 @@ export default function TodayScreen() {
     }
   }, [realm, user, todayStr, activeMinutes]);
 
+  async function fetchHealthData() {
+    if (!permGranted) return;
+
+    const cal = await healthBridge.getCalories(new Date());
+    setCalories(cal);
+
+    // rough active minutes estimate (~100 steps/min walking)
+    const mins = Math.min(Math.floor(steps / 100), 180);
+    setActiveMinutes(mins);
+
+    await saveSnapshot(steps, cal);
+  }
+
   useEffect(() => {
     let unsub: (() => void) | null = null;
     let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -115,11 +128,7 @@ export default function TodayScreen() {
 
       unsub = healthBridge.subscribeToSteps((s) => setSteps(s));
 
-      // refresh snapshot every 5 min
-      intervalId = setInterval(async () => {
-        const c = await healthBridge.getCalories(new Date());
-        setCalories(c);
-      }, 5 * 60 * 1000);
+      intervalId = setInterval(() => fetchHealthData(), 5 * 60 * 1000);
     })();
 
     return () => {
@@ -165,14 +174,10 @@ export default function TodayScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    if (permGranted) {
-      const cal = await healthBridge.getCalories(new Date());
-      setCalories(cal);
-      await saveSnapshot(steps, cal);
-    }
+    await fetchHealthData();
     triggerSync();
     setRefreshing(false);
-  }, [permGranted, steps, triggerSync, saveSnapshot]);
+  }, [permGranted, steps, triggerSync]);
 
   const completedCount = dueToday.filter((h) => completedIds.has(h._id)).length;
 
