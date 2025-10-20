@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, Animated,
+  View, Text, StyleSheet, Pressable, ScrollView,
+  RefreshControl, Animated,
 } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import * as Haptics from 'expo-haptics';
 import { healthBridge } from '../bridges/HealthBridge';
 import { useAuth } from '../context/AuthContext';
+import { useSyncStatus } from '../context/SyncContext';
 import { Habit, HabitCompletion, HealthSnapshot, Workout } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 import { getDeviceId } from '../lib/api';
@@ -28,9 +30,11 @@ export default function TodayScreen() {
   const [calories, setCalories] = useState(0);
   const [activeMinutes, setActiveMinutes] = useState(0);
   const [permGranted, setPermGranted] = useState<boolean | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const realm = useRealm();
   const { user } = useAuth();
+  const { triggerSync } = useSyncStatus();
   const todayStr = toDateStr(new Date());
   const today = new Date();
 
@@ -159,10 +163,32 @@ export default function TodayScreen() {
     }
   }, [realm, user, todayStr]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    if (permGranted) {
+      const cal = await healthBridge.getCalories(new Date());
+      setCalories(cal);
+      await saveSnapshot(steps, cal);
+    }
+    triggerSync();
+    setRefreshing(false);
+  }, [permGranted, steps, triggerSync, saveSnapshot]);
+
   const completedCount = dueToday.filter((h) => completedIds.has(h._id)).length;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#7c83ff"
+          colors={['#7c83ff']}
+        />
+      }
+    >
       <Text style={styles.title}>Today</Text>
 
       {permGranted === false && (
