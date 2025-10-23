@@ -168,6 +168,32 @@ export class HealthSnapshot extends Realm.Object<HealthSnapshot> {
   };
 }
 
+export class UserProfile extends Realm.Object<UserProfile> {
+  _id!: string;
+  userId!: string;
+  name!: string;
+  dailyStepGoal!: number;
+  weeklyWorkoutGoal!: number;
+  versionVector!: string;
+  lastModifiedBy!: string;
+  lastModifiedAt!: Date;
+
+  static schema: Realm.ObjectSchema = {
+    name: 'UserProfile',
+    primaryKey: '_id',
+    properties: {
+      _id: 'string',
+      userId: { type: 'string', indexed: true },
+      name: 'string',
+      dailyStepGoal: { type: 'int', default: 8000 },
+      weeklyWorkoutGoal: { type: 'int', default: 3 },
+      versionVector: 'string',
+      lastModifiedBy: 'string',
+      lastModifiedAt: 'date',
+    },
+  };
+}
+
 export class SyncLog extends Realm.Object<SyncLog> {
   _id!: string;
   timestamp!: Date;
