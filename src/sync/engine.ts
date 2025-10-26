@@ -2,13 +2,13 @@ import Realm from 'realm';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { AppState, AppStateStatus } from 'react-native';
 import { api, getDeviceId } from '../lib/api';
-import { Habit, HabitCompletion, Workout, HealthSnapshot, SyncLog } from '../db/schema';
+import { Habit, HabitCompletion, Workout, HealthSnapshot, UserProfile, SyncLog } from '../db/schema';
 import { compareVectors, mergeVectors, incrementVersion, parseVector, serializeVector } from './versionVector';
 import type { VersionVector } from '../types';
 
 type SyncState = 'idle' | 'pushing' | 'pulling' | 'resolving' | 'error' | 'offline';
 
-type EntityType = 'habits' | 'completions' | 'workouts' | 'snapshots';
+type EntityType = 'habits' | 'completions' | 'workouts' | 'snapshots' | 'profiles';
 
 type SyncableRecord = {
   _id: string;
@@ -37,11 +37,12 @@ type PullResponse = {
 
 export type SyncListener = (state: SyncState, meta?: { error?: string; pending?: number; lastSyncAt?: Date }) => void;
 
-const ENTITY_CLASSES: Record<EntityType, typeof Habit | typeof HabitCompletion | typeof Workout | typeof HealthSnapshot> = {
+const ENTITY_CLASSES: Record<EntityType, typeof Habit | typeof HabitCompletion | typeof Workout | typeof HealthSnapshot | typeof UserProfile> = {
   habits: Habit,
   completions: HabitCompletion,
   workouts: Workout,
   snapshots: HealthSnapshot,
+  profiles: UserProfile,
 };
 
 const BATCH_SIZE = 500;
@@ -65,6 +66,7 @@ export class SyncEngine {
     completions: '',
     workouts: '',
     snapshots: '',
+    profiles: '',
   };
 
   async init(realm: Realm) {
