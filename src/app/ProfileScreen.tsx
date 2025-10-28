@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, Pressable } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { UserProfile } from '../db/schema';
-import { createRecord } from '../db/writeHelper';
+import { createRecord, updateRecord } from '../db/writeHelper';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -25,7 +25,25 @@ export default function ProfileScreen() {
     }
   }, [profile, user]);
 
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+
   const displayName = profile?.name || user?.name || 'User';
+
+  function startEditName() {
+    setNameInput(profile?.name || user?.name || '');
+    setEditingName(true);
+  }
+
+  const saveName = useCallback(async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed || !profile) {
+      setEditingName(false);
+      return;
+    }
+    await updateRecord(realm, UserProfile, profile._id, { name: trimmed });
+    setEditingName(false);
+  }, [nameInput, profile, realm]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
@@ -38,7 +56,28 @@ export default function ProfileScreen() {
           </Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{displayName}</Text>
+          {editingName ? (
+            <View style={styles.nameEditRow}>
+              <TextInput
+                style={styles.nameInput}
+                value={nameInput}
+                onChangeText={setNameInput}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={saveName}
+                placeholder="Your name"
+                placeholderTextColor="#555"
+              />
+              <Pressable onPress={saveName} style={styles.saveBtn}>
+                <Text style={styles.saveBtnText}>Save</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable onPress={startEditName}>
+              <Text style={styles.name}>{displayName}</Text>
+              <Text style={styles.editHint}>tap to edit</Text>
+            </Pressable>
+          )}
           <Text style={styles.email}>{user?.email}</Text>
         </View>
       </View>
@@ -83,9 +122,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
+  editHint: {
+    fontSize: 11,
+    color: '#555',
+    marginTop: 1,
+  },
   email: {
     fontSize: 13,
     color: '#888',
     marginTop: 4,
+  },
+  nameEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameInput: {
+    flex: 1,
+    backgroundColor: '#161616',
+    borderRadius: 8,
+    padding: 10,
+    color: '#fff',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  saveBtn: {
+    backgroundColor: '#7c83ff',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  saveBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
