@@ -27,6 +27,15 @@ export default function ProfileScreen() {
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  const [stepGoal, setStepGoal] = useState(8000);
+  const [workoutGoal, setWorkoutGoal] = useState(3);
+
+  useEffect(() => {
+    if (profile) {
+      setStepGoal(profile.dailyStepGoal);
+      setWorkoutGoal(profile.weeklyWorkoutGoal);
+    }
+  }, [profile?.dailyStepGoal, profile?.weeklyWorkoutGoal]);
 
   const displayName = profile?.name || user?.name || 'User';
 
@@ -44,6 +53,20 @@ export default function ProfileScreen() {
     await updateRecord(realm, UserProfile, profile._id, { name: trimmed });
     setEditingName(false);
   }, [nameInput, profile, realm]);
+
+  const adjustStepGoal = useCallback(async (delta: number) => {
+    if (!profile) return;
+    const next = Math.max(1000, Math.min(50000, stepGoal + delta));
+    setStepGoal(next);
+    await updateRecord(realm, UserProfile, profile._id, { dailyStepGoal: next });
+  }, [stepGoal, profile, realm]);
+
+  const adjustWorkoutGoal = useCallback(async (delta: number) => {
+    if (!profile) return;
+    const next = Math.max(1, Math.min(14, workoutGoal + delta));
+    setWorkoutGoal(next);
+    await updateRecord(realm, UserProfile, profile._id, { weeklyWorkoutGoal: next });
+  }, [workoutGoal, profile, realm]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
@@ -79,6 +102,51 @@ export default function ProfileScreen() {
             </Pressable>
           )}
           <Text style={styles.email}>{user?.email}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionLabel}>Goals</Text>
+      <View style={styles.card}>
+        <View style={styles.goalRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.goalTitle}>Daily Steps</Text>
+            <Text style={styles.goalValue}>{stepGoal.toLocaleString()}</Text>
+          </View>
+          <View style={styles.stepperRow}>
+            <Pressable
+              style={styles.stepperBtn}
+              onPress={() => adjustStepGoal(-1000)}
+            >
+              <Text style={styles.stepperText}>−</Text>
+            </Pressable>
+            <Pressable
+              style={styles.stepperBtn}
+              onPress={() => adjustStepGoal(1000)}
+            >
+              <Text style={styles.stepperText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.goalRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.goalTitle}>Weekly Workouts</Text>
+            <Text style={styles.goalValue}>{workoutGoal}</Text>
+          </View>
+          <View style={styles.stepperRow}>
+            <Pressable
+              style={styles.stepperBtn}
+              onPress={() => adjustWorkoutGoal(-1)}
+            >
+              <Text style={styles.stepperText}>−</Text>
+            </Pressable>
+            <Pressable
+              style={styles.stepperBtn}
+              onPress={() => adjustWorkoutGoal(1)}
+            >
+              <Text style={styles.stepperText}>+</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -157,5 +225,59 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+  sectionLabel: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  card: {
+    backgroundColor: '#161616',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  goalTitle: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  goalValue: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    marginTop: 2,
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  stepperBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#222',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#222',
+    marginVertical: 12,
   },
 });
