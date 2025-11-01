@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Pressable } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, ScrollView,
+  TextInput, Pressable, ActivityIndicator,
+} from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
+import { useSyncStatus } from '../context/SyncContext';
 import { UserProfile } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const { syncStatus, lastSyncAt, pendingRecords, triggerSync } = useSyncStatus();
   const realm = useRealm();
 
   const profiles = useQuery(UserProfile, (c) =>
@@ -67,6 +72,17 @@ export default function ProfileScreen() {
     setWorkoutGoal(next);
     await updateRecord(realm, UserProfile, profile._id, { weeklyWorkoutGoal: next });
   }, [workoutGoal, profile, realm]);
+
+  function formatTime(d: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    if (diff < 60_000) return 'just now';
+    if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m ago`;
+    if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h ago`;
+    return d.toLocaleDateString();
+  }
+
+  const syncing = syncStatus === 'syncing';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
@@ -148,6 +164,47 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </View>
+      </View>
+
+      <Text style={styles.sectionLabel}>Sync</Text>
+      <View style={styles.card}>
+        <View style={styles.syncRow}>
+          <Text style={styles.syncLabel}>Status</Text>
+          <View style={styles.statusBadge}>
+            <View style={[
+              styles.statusDot,
+              syncStatus === 'idle' && { backgroundColor: '#4ade80' },
+              syncStatus === 'syncing' && { backgroundColor: '#7c83ff' },
+              syncStatus === 'offline' && { backgroundColor: '#888' },
+              syncStatus === 'error' && { backgroundColor: '#ff4d4d' },
+            ]} />
+            <Text style={styles.syncValue}>{syncStatus}</Text>
+          </View>
+        </View>
+        <View style={styles.syncRow}>
+          <Text style={styles.syncLabel}>Last synced</Text>
+          <Text style={styles.syncValue}>
+            {lastSyncAt ? formatTime(lastSyncAt) : 'never'}
+          </Text>
+        </View>
+        <View style={styles.syncRow}>
+          <Text style={styles.syncLabel}>Pending changes</Text>
+          <Text style={[styles.syncValue, pendingRecords > 0 && { color: '#f0ad4e' }]}>
+            {pendingRecords}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.syncBtn, syncing && { opacity: 0.6 }]}
+          onPress={triggerSync}
+          disabled={syncing}
+        >
+          {syncing ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.syncBtnText}>Sync Now</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -279,5 +336,43 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#222',
     marginVertical: 12,
+  },
+  syncRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  syncLabel: {
+    color: '#888',
+    fontSize: 14,
+  },
+  syncValue: {
+    color: '#fff',
+    fontSize: 14,
+    fontVariant: ['tabular-nums'],
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#888',
+  },
+  syncBtn: {
+    backgroundColor: '#7c83ff',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  syncBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
   },
 });
