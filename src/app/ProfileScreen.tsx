@@ -6,7 +6,7 @@ import {
 import { useRealm, useQuery } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { useSyncStatus } from '../context/SyncContext';
-import { UserProfile } from '../db/schema';
+import { UserProfile, SyncLog } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 
 export default function ProfileScreen() {
@@ -18,6 +18,10 @@ export default function ProfileScreen() {
     c.filtered('userId == $0', user!.id),
   );
   const profile = profiles.length > 0 ? profiles[0] : null;
+
+  const syncLogs = useQuery(SyncLog, (c) =>
+    c.sorted('timestamp', true),
+  ).slice(0, 5);
 
   useEffect(() => {
     if (!profile && user) {
@@ -205,6 +209,26 @@ export default function ProfileScreen() {
             <Text style={styles.syncBtnText}>Sync Now</Text>
           )}
         </TouchableOpacity>
+
+        {syncLogs.length > 0 && (
+          <>
+            <Text style={styles.logHeader}>Recent</Text>
+            {syncLogs.map((log) => (
+              <View key={log._id} style={styles.logRow}>
+                <View style={[
+                  styles.logDot,
+                  log.status === 'success' ? { backgroundColor: '#4ade80' } : { backgroundColor: '#ff4d4d' },
+                ]} />
+                <Text style={styles.logTime}>{formatTime(log.timestamp)}</Text>
+                <Text style={styles.logDetail}>
+                  {log.status === 'success'
+                    ? `↑${log.recordsPushed} ↓${log.recordsPulled}${log.conflicts > 0 ? ` ⚡${log.conflicts}` : ''}`
+                    : log.errorMessage ?? 'failed'}
+                </Text>
+              </View>
+            ))}
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -374,5 +398,35 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 15,
+  },
+  logHeader: {
+    color: '#555',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  logRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  logDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  logTime: {
+    color: '#666',
+    fontSize: 12,
+    width: 60,
+    fontVariant: ['tabular-nums'],
+  },
+  logDetail: {
+    color: '#aaa',
+    fontSize: 12,
+    flex: 1,
   },
 });
