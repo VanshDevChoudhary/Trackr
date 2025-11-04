@@ -9,8 +9,10 @@ import { useSyncStatus } from '../context/SyncContext';
 import { UserProfile, SyncLog } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 
+const APP_VERSION = '1.0.0';
+
 export default function ProfileScreen() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { syncStatus, lastSyncAt, pendingRecords, triggerSync } = useSyncStatus();
   const realm = useRealm();
 
@@ -230,6 +232,14 @@ export default function ProfileScreen() {
           </>
         )}
       </View>
+
+      <View style={styles.versionRow}>
+        <Text style={styles.versionText}>trackr v{APP_VERSION}</Text>
+      </View>
+
+      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+        <Text style={styles.logoutText}>Log out</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -428,5 +438,27 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 12,
     flex: 1,
+  },
+  versionRow: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  versionText: {
+    color: '#444',
+    fontSize: 12,
+  },
+  logoutBtn: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+    marginBottom: 20,
+  },
+  logoutText: {
+    color: '#ff4d4d',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
