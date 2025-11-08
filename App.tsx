@@ -7,6 +7,7 @@ import { Text, View } from 'react-native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import RealmProvider from './src/db/provider';
 import { SyncProvider } from './src/context/SyncContext';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import SyncBanner from './src/components/SyncBanner';
 import TodayScreen from './src/app/TodayScreen';
 import HabitsScreen from './src/app/HabitsScreen';
@@ -35,23 +36,35 @@ function TabIcon({ name, color }: { name: string; color: string }) {
   return <Text style={{ fontSize: 20, color }}>{tabIcons[name] ?? '?'}</Text>;
 }
 
+function WrappedToday() {
+  return <ErrorBoundary fallbackLabel="Today"><TodayScreen /></ErrorBoundary>;
+}
+
+function WrappedProfile() {
+  return <ErrorBoundary fallbackLabel="Profile"><ProfileScreen /></ErrorBoundary>;
+}
+
 function HabitsNavigator() {
   return (
-    <HabitsNav.Navigator screenOptions={{ headerShown: false }}>
-      <HabitsNav.Screen name="HabitsList" component={HabitsScreen} />
-      <HabitsNav.Screen name="HabitForm" component={HabitFormScreen} />
-      <HabitsNav.Screen name="HabitDetail" component={HabitDetailScreen} />
-    </HabitsNav.Navigator>
+    <ErrorBoundary fallbackLabel="Habits">
+      <HabitsNav.Navigator screenOptions={{ headerShown: false }}>
+        <HabitsNav.Screen name="HabitsList" component={HabitsScreen} />
+        <HabitsNav.Screen name="HabitForm" component={HabitFormScreen} />
+        <HabitsNav.Screen name="HabitDetail" component={HabitDetailScreen} />
+      </HabitsNav.Navigator>
+    </ErrorBoundary>
   );
 }
 
 function WorkoutsNavigator() {
   return (
-    <WorkoutsNav.Navigator screenOptions={{ headerShown: false }}>
-      <WorkoutsNav.Screen name="WorkoutsList" component={WorkoutsScreen} />
-      <WorkoutsNav.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
-      <WorkoutsNav.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
-    </WorkoutsNav.Navigator>
+    <ErrorBoundary fallbackLabel="Workouts">
+      <WorkoutsNav.Navigator screenOptions={{ headerShown: false }}>
+        <WorkoutsNav.Screen name="WorkoutsList" component={WorkoutsScreen} />
+        <WorkoutsNav.Screen name="ActiveWorkout" component={ActiveWorkoutScreen} />
+        <WorkoutsNav.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
+      </WorkoutsNav.Navigator>
+    </ErrorBoundary>
   );
 }
 
@@ -75,10 +88,10 @@ function MainTabs() {
         tabBarIcon: ({ color }) => <TabIcon name={route.name} color={color} />,
       })}
     >
-      <Tab.Screen name="Today" component={TodayScreen} />
+      <Tab.Screen name="Today" component={WrappedToday} />
       <Tab.Screen name="Habits" component={HabitsNavigator} />
       <Tab.Screen name="Workouts" component={WorkoutsNavigator} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={WrappedProfile} />
     </Tab.Navigator>
   );
 }
