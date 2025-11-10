@@ -12,6 +12,7 @@ import type { HealthWorkout } from '../bridges/types';
 import type { WorkoutType } from '../types';
 import WorkoutCard from '../components/WorkoutCard';
 import ImportableWorkoutCard from '../components/ImportableWorkoutCard';
+import { WorkoutListSkeleton } from '../components/Skeleton';
 
 function mapHealthType(raw: string): WorkoutType {
   const lower = raw.toLowerCase();
@@ -24,6 +25,7 @@ export default function WorkoutsScreen({ navigation }: any) {
   const realm = useRealm();
   const { user } = useAuth();
   const [importable, setImportable] = useState<HealthWorkout[]>([]);
+  const [ready, setReady] = useState(false);
 
   const workouts = useQuery(Workout, (c) =>
     c.filtered('isDeleted == false AND userId == $0', user!.id).sorted('startedAt', true),
@@ -49,7 +51,9 @@ export default function WorkoutsScreen({ navigation }: any) {
       if (!cancelled) setImportable(filtered);
     }
 
-    fetchImportable();
+    fetchImportable().finally(() => {
+      if (!cancelled) setReady(true);
+    });
     return () => { cancelled = true; };
   }, [workouts.length]);
 
@@ -105,7 +109,11 @@ export default function WorkoutsScreen({ navigation }: any) {
     <View style={styles.container}>
       <Text style={styles.title}>Workouts</Text>
 
-      {hasImportable && (
+      {!ready ? (
+        <WorkoutListSkeleton />
+      ) : null}
+
+      {ready && hasImportable && (
         <View style={styles.importSection}>
           <Text style={styles.sectionLabel}>Available to Import</Text>
           {importable.map((hw) => (
@@ -118,13 +126,13 @@ export default function WorkoutsScreen({ navigation }: any) {
         </View>
       )}
 
-      {workouts.length === 0 && !hasImportable ? (
+      {ready && workouts.length === 0 && !hasImportable ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>💪</Text>
           <Text style={styles.emptyText}>No workouts yet</Text>
           <Text style={styles.emptySub}>Start your first session</Text>
         </View>
-      ) : (
+      ) : ready ? (
         <FlatList
           data={workouts}
           keyExtractor={(item) => item._id}
@@ -132,7 +140,7 @@ export default function WorkoutsScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
         />
-      )}
+      ) : null}
 
       <Pressable style={styles.fab} onPress={handleStartWorkout}>
         <Text style={styles.fabText}>+</Text>

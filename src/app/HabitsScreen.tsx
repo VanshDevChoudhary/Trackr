@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { useQuery, useRealm } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
@@ -7,15 +7,22 @@ import { createRecord, softDelete } from '../db/writeHelper';
 import { getDeviceId } from '../lib/api';
 import { calculateCurrentStreak, parseFrequency, toDateStr } from '../lib/streaks';
 import HabitCard from '../components/HabitCard';
+import { HabitListSkeleton } from '../components/Skeleton';
 
 export default function HabitsScreen({ navigation }: any) {
   const realm = useRealm();
   const { user } = useAuth();
   const todayStr = toDateStr(new Date());
+  const [ready, setReady] = useState(false);
 
   const habits = useQuery(Habit, (c) =>
     c.filtered('isDeleted == false AND userId == $0', user!.id),
   );
+
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 150);
+    return () => clearTimeout(t);
+  }, []);
 
   const todayCompletions = useQuery(HabitCompletion, (c) =>
     c.filtered('userId == $0 AND date == $1', user!.id, todayStr),
@@ -83,7 +90,9 @@ export default function HabitsScreen({ navigation }: any) {
     <View style={styles.container}>
       <Text style={styles.title}>Habits</Text>
 
-      {habits.length === 0 ? (
+      {!ready ? (
+        <HabitListSkeleton />
+      ) : habits.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>🎯</Text>
           <Text style={styles.emptyText}>No habits yet</Text>
