@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useQuery, useRealm } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { Habit, HabitCompletion } from '../db/schema';
@@ -51,6 +52,7 @@ export default function HabitsScreen({ navigation }: any) {
     if (existing.length > 0) {
       // TODO: hard delete doesn't propagate via sync — revisit when sync supports tombstones
       realm.write(() => realm.delete(existing[0]));
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } else {
       const deviceId = await getDeviceId();
       await createRecord(realm, HabitCompletion, {
@@ -60,6 +62,7 @@ export default function HabitsScreen({ navigation }: any) {
         completedAt: new Date(),
         deviceId,
       });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   }, [realm, user, todayStr]);
 

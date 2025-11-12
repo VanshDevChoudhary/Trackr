@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 type Props = {
   index: number;
@@ -43,7 +44,7 @@ export default function SetRow({
       {/* TODO: pull unit from user preferences (kg/lbs) */}
       <Text style={styles.label}>kg</Text>
 
-      <Pressable onPress={onToggle} style={styles.checkWrap}>
+      <Pressable onPress={() => { onToggle(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }} style={styles.checkWrap}>
         <View style={[styles.check, completed && styles.checkDone]}>
           {completed && <Text style={styles.checkMark}>✓</Text>}
         </View>

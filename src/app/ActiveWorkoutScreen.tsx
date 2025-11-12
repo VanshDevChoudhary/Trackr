@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TextInput,
   Pressable, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRealm } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { createRecord } from '../db/writeHelper';
@@ -131,6 +132,7 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
       createdAt: new Date(),
     });
 
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     navigation.goBack();
   }
 
