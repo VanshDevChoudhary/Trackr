@@ -1,7 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Alert, Platform,
+  LayoutAnimation, UIManager,
 } from 'react-native';
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 import { useQuery, useRealm } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { Workout } from '../db/schema';
@@ -72,6 +77,7 @@ export default function WorkoutsScreen({ navigation }: any) {
       deviceId,
       createdAt: new Date(),
     });
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setImportable((prev) => prev.filter((w) => w.id !== hw.id));
   }, [realm, user]);
 

@@ -1,6 +1,10 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, LayoutAnimation, UIManager, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 import { useQuery, useRealm } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { Habit, HabitCompletion } from '../db/schema';
@@ -67,6 +71,7 @@ export default function HabitsScreen({ navigation }: any) {
   }, [realm, user, todayStr]);
 
   const handleDelete = useCallback(async (habitId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     await softDelete(realm, Habit, habitId);
   }, [realm]);
 
