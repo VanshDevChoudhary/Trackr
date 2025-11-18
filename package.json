@@ -4,11 +4,14 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@expo-google-fonts/playfair-display": "^0.4.2",
     "@react-native-community/netinfo": "11.5.2",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/native": "^7.1.33",
@@ -16,6 +19,7 @@
     "@realm/react": "^0.20.0",
     "expo": "~55.0.6",
     "expo-dev-client": "~55.0.16",
+    "expo-font": "~55.0.4",
     "expo-haptics": "~55.0.8",
     "expo-secure-store": "~55.0.8",
     "expo-status-bar": "~55.0.4",
@@ -26,6 +30,7 @@
     "realm": "^20.2.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "typescript": "~5.9.2"
   },

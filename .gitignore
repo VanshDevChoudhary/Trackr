@@ -43,6 +43,9 @@ server/dist/
 # generated native folders
 /ios
 /android
+
+# native module build artifacts
+modules/**/build/
 CLAUDE.md
 docs/CC_PROMPTS.md
 docs/project-opsec-checklist.md

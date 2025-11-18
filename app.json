@@ -16,13 +16,15 @@
       "bundleIdentifier": "com.trackr.app"
     },
     "android": {
+      "package": "com.trackr.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "minSdkVersion": 26
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,7 +32,14 @@
     "plugins": [
       "expo-secure-store",
       "./plugins/withHealthKit",
-      "./plugins/withHealthConnect"
-    ]
+      "./plugins/withHealthConnect",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2808ec8b-6e83-4215-ac61-f3e903e545a4"
+      }
+    },
+    "owner": "domshivanggoliyan"
   }
 }
