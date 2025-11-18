@@ -1,0 +1,14 @@
+apply plugin: 'expo-module-gradle-plugin'
+
+android {
+  namespace "expo.modules.healthbridge"
+
+  defaultConfig {
+    versionName "1.0.0"
+    versionCode 1
+  }
+}
+
+dependencies {
+  implementation "androidx.health.connect:connect-client:1.1.0-alpha10"
+}
