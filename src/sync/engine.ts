@@ -179,7 +179,7 @@ export class SyncEngine {
     }
   }
 
-  private getDirtyRecords(entityType: EntityType): Realm.Results<Realm.Object> {
+  private getDirtyRecords(entityType: EntityType): Realm.Results<any> {
     if (!this.realm) return [] as unknown as Realm.Results<Realm.Object>;
 
     const SchemaClass = ENTITY_CLASSES[entityType];
@@ -188,12 +188,12 @@ export class SyncEngine {
     if (!cursor) {
       // No cursor means first sync — nothing is "dirty" per se,
       // but we push everything that has our deviceId as lastModifiedBy
-      return this.realm.objects(SchemaClass).filtered(
+      return this.realm.objects(SchemaClass as any).filtered(
         'lastModifiedBy == $0', this.deviceId,
       );
     }
 
-    return this.realm.objects(SchemaClass).filtered(
+    return this.realm.objects(SchemaClass as any).filtered(
       'lastModifiedAt > $0', new Date(cursor),
     );
   }
@@ -261,12 +261,12 @@ export class SyncEngine {
     if (!this.realm) return;
 
     const SchemaClass = ENTITY_CLASSES[record.entityType];
-    const local = this.realm.objectForPrimaryKey(SchemaClass, record._id);
+    const local = this.realm.objectForPrimaryKey(SchemaClass as any, record._id as any);
 
     if (!local) {
       // New record — insert
       this.realm.write(() => {
-        this.realm!.create(SchemaClass, {
+        this.realm!.create(SchemaClass as any, {
           ...record.data,
           versionVector: serializeVector(record.versionVector),
           lastModifiedAt: new Date(record.lastModifiedAt),
@@ -286,7 +286,7 @@ export class SyncEngine {
           const updates = { ...record.data };
           updates.versionVector = serializeVector(record.versionVector);
           updates.lastModifiedAt = new Date(record.lastModifiedAt);
-          this.realm!.create(SchemaClass, updates, Realm.UpdateMode.Modified);
+          this.realm!.create(SchemaClass as any, updates, Realm.UpdateMode.Modified);
         });
         break;
 
@@ -318,7 +318,7 @@ export class SyncEngine {
     if (winner === 'local') {
       // Keep local data but update the vector
       this.realm.write(() => {
-        const obj = this.realm!.objectForPrimaryKey(ENTITY_CLASSES[entityType], remote._id);
+        const obj = this.realm!.objectForPrimaryKey(ENTITY_CLASSES[entityType] as any, remote._id as any);
         if (obj) {
           (obj as unknown as Record<string, unknown>).versionVector = serializeVector(merged);
         }
@@ -328,7 +328,7 @@ export class SyncEngine {
         const updates = { ...remote.data };
         updates.versionVector = serializeVector(merged);
         updates.lastModifiedAt = new Date(remote.lastModifiedAt);
-        this.realm!.create(ENTITY_CLASSES[entityType], updates, Realm.UpdateMode.Modified);
+        this.realm!.create(ENTITY_CLASSES[entityType] as any, updates, Realm.UpdateMode.Modified);
       });
     }
   }
@@ -354,7 +354,7 @@ export class SyncEngine {
   private applyConflictResolution(entityType: EntityType, recordId: string, mergedVector: VersionVector) {
     if (!this.realm) return;
     const SchemaClass = ENTITY_CLASSES[entityType];
-    const obj = this.realm.objectForPrimaryKey(SchemaClass, recordId);
+    const obj = this.realm.objectForPrimaryKey(SchemaClass as any, recordId as any);
     if (!obj) return;
 
     this.realm.write(() => {

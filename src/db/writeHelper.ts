@@ -13,55 +13,49 @@ function genId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-type SyncableSchema = {
-  _id: string;
-  versionVector: string;
-  lastModifiedBy: string;
-  lastModifiedAt: Date;
-  [key: string]: unknown;
-};
+type SchemaClass = { schema: Realm.ObjectSchema; new (...args: any[]): any };
 
 /**
  * Creates a new record with sync metadata pre-filled.
  * Use this instead of raw realm.write() for any syncable entity.
  */
-export async function createRecord<T extends SyncableSchema>(
+export async function createRecord<T = any>(
   realm: Realm,
-  schemaClass: { new (): T } & Realm.ObjectClass,
-  data: Omit<T, '_id' | 'versionVector' | 'lastModifiedBy' | 'lastModifiedAt'> & { _id?: string },
+  schemaClass: SchemaClass,
+  data: Record<string, any>,
 ): Promise<T> {
   const deviceId = await ensureDeviceId();
   const id = data._id || genId();
   const vector = incrementVersion({}, deviceId);
 
-  let created: T | undefined;
+  let created: any;
   realm.write(() => {
-    created = realm.create(schemaClass, {
+    created = realm.create(schemaClass as any, {
       ...data,
       _id: id,
       versionVector: serializeVector(vector),
       lastModifiedBy: deviceId,
       lastModifiedAt: new Date(),
-    } as unknown as T);
+    });
   });
 
-  return created!;
+  return created as T;
 }
 
 /**
  * Updates an existing record and bumps its version vector.
  */
-export async function updateRecord<T extends SyncableSchema>(
+export async function updateRecord<T = any>(
   realm: Realm,
-  schemaClass: { new (): T } & Realm.ObjectClass,
+  schemaClass: SchemaClass,
   id: string,
-  changes: Partial<Omit<T, '_id' | 'versionVector' | 'lastModifiedBy' | 'lastModifiedAt'>>,
+  changes: Record<string, any>,
 ): Promise<T | null> {
-  const obj = realm.objectForPrimaryKey(schemaClass, id) as T | null;
+  const obj = realm.objectForPrimaryKey(schemaClass.schema.name, id as any);
   if (!obj) return null;
 
   const deviceId = await ensureDeviceId();
-  const currentVector = parseVector(obj.versionVector);
+  const currentVector = parseVector((obj as any).versionVector);
   const newVector = incrementVersion(currentVector, deviceId);
 
   realm.write(() => {
@@ -73,17 +67,17 @@ export async function updateRecord<T extends SyncableSchema>(
     });
   });
 
-  return obj;
+  return obj as T;
 }
 
 /**
  * Soft-deletes a record (sets isDeleted = true and bumps version).
  */
-export async function softDelete<T extends SyncableSchema & { isDeleted: boolean }>(
+export async function softDelete(
   realm: Realm,
-  schemaClass: { new (): T } & Realm.ObjectClass,
+  schemaClass: SchemaClass,
   id: string,
 ): Promise<boolean> {
-  const result = await updateRecord(realm, schemaClass, id, { isDeleted: true } as Partial<Omit<T, '_id' | 'versionVector' | 'lastModifiedBy' | 'lastModifiedAt'>>);
+  const result = await updateRecord(realm, schemaClass, id, { isDeleted: true });
   return result !== null;
 }

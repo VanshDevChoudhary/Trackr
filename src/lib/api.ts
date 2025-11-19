@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const BASE_URL = 'http://127.0.0.1:3001/api/v1';
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;

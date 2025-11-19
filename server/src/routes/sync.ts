@@ -64,8 +64,8 @@ function objToMap(obj: VV): Map<string, number> {
 const syncRecordSchema = z.object({
   _id: z.string(),
   entityType: z.enum(['habits', 'completions', 'workouts', 'snapshots']),
-  data: z.record(z.unknown()),
-  versionVector: z.record(z.number()),
+  data: z.record(z.string(), z.unknown()),
+  versionVector: z.record(z.string(), z.number()),
   lastModifiedBy: z.string(),
   lastModifiedAt: z.string(),
 });
