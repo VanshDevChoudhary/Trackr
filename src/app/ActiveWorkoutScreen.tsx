@@ -12,6 +12,7 @@ import { Workout } from '../db/schema';
 import type { WorkoutType } from '../types';
 import ExerciseInput, { type SetData } from '../components/ExerciseInput';
 import WorkoutTimer from '../components/WorkoutTimer';
+import { colors, fonts, border } from '../theme';
 
 type ExerciseState = {
   name: string;
@@ -149,19 +150,43 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
     flexibility: 'Flexibility',
   };
 
+  const completedExercises = exercises.filter(e => e.name.trim()).length;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>{typeLabels[type]}</Text>
-        <Pressable onPress={confirmFinish}>
-          <Text style={styles.finishText}>Finish</Text>
-        </Pressable>
+      {/* Yellow header bar */}
+      <View style={styles.headerBar}>
+        <View style={styles.headerLeft}>
+          <Pressable onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>←</Text>
+          </Pressable>
+          <Text style={styles.headerLogo}>trackr</Text>
+        </View>
+        <WorkoutTimer onElapsed={(s) => { elapsedRef.current = s; }} />
+      </View>
+
+      <View style={styles.progressSection}>
+        <TextInput
+          style={styles.nameInput}
+          value={workoutName}
+          onChangeText={setWorkoutName}
+          placeholder={`${typeLabels[type]} A`}
+          placeholderTextColor={colors.textLight}
+        />
+        {isStrength && (
+          <>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: `${Math.min((completedExercises / Math.max(exercises.length, 1)) * 100, 100)}%` }]} />
+            </View>
+            <View style={styles.progressMeta}>
+              <Text style={styles.progressLabel}>PROGRESS</Text>
+              <Text style={styles.progressCount}>{completedExercises} OF {exercises.length} EXERCISES</Text>
+            </View>
+          </>
+        )}
       </View>
 
       <ScrollView
@@ -169,14 +194,6 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TextInput
-          style={styles.nameInput}
-          value={workoutName}
-          onChangeText={setWorkoutName}
-          placeholder={`${typeLabels[type]} Workout`}
-          placeholderTextColor="#555"
-        />
-
         {isStrength ? (
           <>
             {exercises.map((ex, i) => (
@@ -193,23 +210,26 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
             ))}
 
             <Pressable style={styles.addExercise} onPress={addExercise}>
-              <Text style={styles.addExerciseText}>+ Add Exercise</Text>
+              <Text style={styles.addExerciseText}>+ ADD EXERCISE</Text>
             </Pressable>
           </>
         ) : (
-          <>
-            <WorkoutTimer onElapsed={(s) => { elapsedRef.current = s; }} />
-
-            <TextInput
-              style={styles.timedInput}
-              value={timedExerciseName}
-              onChangeText={setTimedExerciseName}
-              placeholder="What are you doing? (e.g. Running)"
-              placeholderTextColor="#555"
-            />
-          </>
+          <TextInput
+            style={styles.timedInput}
+            value={timedExerciseName}
+            onChangeText={setTimedExerciseName}
+            placeholder="What are you doing? (e.g. Running)"
+            placeholderTextColor={colors.textLight}
+          />
         )}
       </ScrollView>
+
+      <View style={styles.footer}>
+        <Pressable style={styles.finishBtn} onPress={confirmFinish}>
+          <Text style={styles.finishBtnText}>FINISH WORKOUT</Text>
+        </Pressable>
+        <Text style={styles.footerNote}>SESSION DATA WILL BE SYNCED TO YOUR LOG</Text>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -217,66 +237,121 @@ export default function ActiveWorkoutScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingTop: 60,
+    backgroundColor: colors.background,
   },
-  header: {
+  headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    backgroundColor: colors.primary,
+    paddingTop: 52,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
+    borderBottomWidth: border.width,
+    borderBottomColor: colors.border,
   },
-  cancelText: {
-    color: '#888',
-    fontSize: 16,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '600',
+  backArrow: {
+    fontSize: 22,
+    color: colors.text,
+    fontFamily: fonts.bodyBold,
   },
-  finishText: {
-    color: '#7c83ff',
-    fontSize: 16,
-    fontWeight: '600',
+  headerLogo: {
+    fontFamily: fonts.serif,
+    fontSize: 20,
+    color: colors.text,
+    fontStyle: 'italic',
   },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+  progressSection: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   nameInput: {
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#222',
+    fontFamily: fonts.serif,
+    fontSize: 28,
+    color: colors.text,
+    marginBottom: 12,
+    padding: 0,
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: colors.borderLight,
+    marginBottom: 8,
+  },
+  progressBarFill: {
+    height: 6,
+    backgroundColor: colors.text,
+  },
+  progressMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  progressLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: colors.text,
+  },
+  progressCount: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: colors.textMuted,
+  },
+  scroll: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   addExercise: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
     padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2a3a',
-    borderStyle: 'dashed',
+    marginTop: 12,
   },
   addExerciseText: {
-    color: '#7c83ff',
-    fontSize: 15,
-    fontWeight: '500',
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 12,
+    letterSpacing: 1.5,
   },
   timedInput: {
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    color: '#fff',
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    color: colors.text,
+    fontFamily: fonts.body,
     fontSize: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#222',
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 36,
+    paddingTop: 12,
+  },
+  finishBtn: {
+    backgroundColor: colors.text,
+    paddingVertical: 18,
+    alignItems: 'center',
+  },
+  finishBtnText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    letterSpacing: 2,
+    color: colors.surface,
+  },
+  footerNote: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginTop: 10,
   },
 });

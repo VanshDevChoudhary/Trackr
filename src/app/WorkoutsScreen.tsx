@@ -18,6 +18,7 @@ import type { WorkoutType } from '../types';
 import WorkoutCard from '../components/WorkoutCard';
 import ImportableWorkoutCard from '../components/ImportableWorkoutCard';
 import { WorkoutListSkeleton } from '../components/Skeleton';
+import { colors, fonts, border } from '../theme';
 
 function mapHealthType(raw: string): WorkoutType {
   const lower = raw.toLowerCase();
@@ -44,7 +45,6 @@ export default function WorkoutsScreen({ navigation }: any) {
       const weekAgo = new Date(now.getTime() - 7 * 86400000);
       const healthWorkouts = await healthBridge.getWorkouts(weekAgo, now);
 
-      // filter out already-imported ones by matching startDate
       const existingStarts = new Set<number>();
       for (const w of workouts) {
         if (w.source !== 'manual') existingStarts.add(w.startedAt.getTime());
@@ -113,15 +113,18 @@ export default function WorkoutsScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Workouts</Text>
+      <View style={styles.headerBar}>
+        <Text style={styles.headerLogo}>TRACKR</Text>
+      </View>
+      <View style={styles.divider} />
 
       {!ready ? (
-        <WorkoutListSkeleton />
+        <View style={styles.content}><WorkoutListSkeleton /></View>
       ) : null}
 
       {ready && hasImportable && (
         <View style={styles.importSection}>
-          <Text style={styles.sectionLabel}>Available to Import</Text>
+          <Text style={styles.sectionLabel}>AVAILABLE TO IMPORT</Text>
           {importable.map((hw) => (
             <ImportableWorkoutCard
               key={hw.id}
@@ -134,23 +137,40 @@ export default function WorkoutsScreen({ navigation }: any) {
 
       {ready && workouts.length === 0 && !hasImportable ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>💪</Text>
-          <Text style={styles.emptyText}>No workouts yet</Text>
-          <Text style={styles.emptySub}>Start your first session</Text>
+          <Text style={styles.emptyHeading}>No sessions recorded</Text>
+          <Text style={styles.emptySub}>
+            Your fitness journey starts here. Record your first session to see your progress, peak performance, and detailed body insights.
+          </Text>
+          <Pressable style={styles.startBtn} onPress={handleStartWorkout}>
+            <Text style={styles.startBtnText}>START WORKOUT</Text>
+          </Pressable>
+
+          <View style={styles.emptyStats}>
+            <View style={styles.emptyStatItem}>
+              <Text style={styles.emptyStatLabel}>VOLUME</Text>
+              <Text style={styles.emptyStatValue}>0 kg</Text>
+            </View>
+            <View style={styles.emptyStatItem}>
+              <Text style={styles.emptyStatLabel}>TIME</Text>
+              <Text style={styles.emptyStatValue}>0m</Text>
+            </View>
+          </View>
         </View>
       ) : ready ? (
         <FlatList
           data={workouts}
           keyExtractor={(item) => item._id}
           renderItem={renderWorkout}
-          contentContainerStyle={{ paddingBottom: 80 }}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
       ) : null}
 
-      <Pressable style={styles.fab} onPress={handleStartWorkout}>
-        <Text style={styles.fabText}>+</Text>
-      </Pressable>
+      {workouts.length > 0 && (
+        <Pressable style={styles.fab} onPress={handleStartWorkout}>
+          <Text style={styles.fabText}>+</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -158,67 +178,118 @@ export default function WorkoutsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    backgroundColor: colors.background,
+    paddingTop: 52,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 20,
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  headerLogo: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    letterSpacing: 2,
+    color: colors.text,
+  },
+  divider: {
+    height: border.width,
+    backgroundColor: colors.border,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
   importSection: {
-    marginBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    marginBottom: 8,
   },
   sectionLabel: {
-    color: '#888',
-    fontSize: 13,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 10,
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.textMuted,
+    marginBottom: 12,
+  },
+  listContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 100,
   },
   empty: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -60,
+    paddingHorizontal: 32,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+  emptyHeading: {
+    fontFamily: fonts.serif,
+    color: colors.text,
+    fontSize: 28,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   emptySub: {
-    color: '#666',
+    fontFamily: fonts.body,
+    color: colors.textMuted,
     fontSize: 14,
-    marginTop: 4,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  startBtn: {
+    width: '100%',
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    paddingVertical: 18,
+    alignItems: 'center',
+  },
+  startBtnText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    letterSpacing: 2,
+    color: colors.text,
+  },
+  emptyStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 48,
+  },
+  emptyStatItem: {
+    alignItems: 'center',
+  },
+  emptyStatLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.textLight,
+    marginBottom: 4,
+  },
+  emptyStatValue: {
+    fontFamily: fonts.mono,
+    fontSize: 22,
+    color: colors.text,
   },
   fab: {
     position: 'absolute',
-    right: 20,
+    right: 24,
     bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#7c83ff',
+    width: 52,
+    height: 52,
+    backgroundColor: colors.text,
+    borderWidth: border.width,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#7c83ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   fabText: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '400',
-    marginTop: -2,
+    color: colors.primary,
+    fontSize: 24,
+    fontFamily: fonts.bodyBold,
   },
 });

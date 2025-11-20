@@ -9,6 +9,7 @@ import { Habit } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
 import IconPicker from '../components/IconPicker';
 import ColorPicker from '../components/ColorPicker';
+import { colors, fonts, border } from '../theme';
 import type { Frequency, FrequencyType } from '../types';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -20,7 +21,7 @@ export default function HabitFormScreen({ route, navigation }: any) {
 
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('🏃');
-  const [color, setColor] = useState('#7c83ff');
+  const [color, setColor] = useState('#FFDB58');
   const [freqType, setFreqType] = useState<FrequencyType>('daily');
   const [weekDays, setWeekDays] = useState<number[]>([1, 3, 5]);
   const [customInterval, setCustomInterval] = useState('2');
@@ -91,30 +92,37 @@ export default function HabitFormScreen({ route, navigation }: any) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
+        <View style={styles.headerLeft}>
+          <Pressable onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>←</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>TRACKR</Text>
+        </View>
+        <Pressable style={styles.saveHeaderBtn} onPress={save}>
+          <Text style={styles.saveHeaderText}>SAVE HABIT</Text>
         </Pressable>
-        <Text style={styles.title}>{habitId ? 'Edit Habit' : 'New Habit'}</Text>
       </View>
 
-      <Text style={styles.label}>Name</Text>
+      <View style={styles.divider} />
+
+      <Text style={styles.heroLabel}>
+        {habitId ? 'Edit your habit' : 'What is your new habit?'}
+      </Text>
+
       <TextInput
-        style={styles.input}
+        style={styles.nameInput}
         value={name}
         onChangeText={setName}
-        placeholder="e.g. Morning run"
-        placeholderTextColor="#555"
+        placeholder="e.g. Read for 30 minutes"
+        placeholderTextColor={colors.textLight}
         maxLength={50}
       />
 
       <Text style={styles.label}>Icon</Text>
       <IconPicker selected={icon} onSelect={setIcon} />
 
-      <Text style={[styles.label, { marginTop: 20 }]}>Color</Text>
-      <ColorPicker selected={color} onSelect={setColor} />
-
-      <Text style={[styles.label, { marginTop: 20 }]}>Frequency</Text>
-      <View style={styles.freqRow}>
+      <Text style={styles.sectionTitle}>Frequency</Text>
+      <View style={styles.freqGrid}>
         {(['daily', 'weekly', 'custom'] as FrequencyType[]).map((ft) => (
           <Pressable
             key={ft}
@@ -122,7 +130,7 @@ export default function HabitFormScreen({ route, navigation }: any) {
             onPress={() => setFreqType(ft)}
           >
             <Text style={[styles.freqBtnText, freqType === ft && styles.freqBtnTextActive]}>
-              {ft.charAt(0).toUpperCase() + ft.slice(1)}
+              {ft.toUpperCase()}
             </Text>
           </Pressable>
         ))}
@@ -133,10 +141,10 @@ export default function HabitFormScreen({ route, navigation }: any) {
           {WEEKDAYS.map((label, i) => (
             <Pressable
               key={i}
-              style={[styles.dayBtn, weekDays.includes(i) && { backgroundColor: color }]}
+              style={[styles.dayBtn, weekDays.includes(i) && styles.dayBtnActive]}
               onPress={() => toggleWeekDay(i)}
             >
-              <Text style={[styles.dayBtnText, weekDays.includes(i) && { color: '#fff' }]}>
+              <Text style={[styles.dayBtnText, weekDays.includes(i) && styles.dayBtnTextActive]}>
                 {label}
               </Text>
             </Pressable>
@@ -158,9 +166,8 @@ export default function HabitFormScreen({ route, navigation }: any) {
         </View>
       )}
 
-      <Pressable style={[styles.saveBtn, { backgroundColor: color }]} onPress={save}>
-        <Text style={styles.saveBtnText}>{habitId ? 'Save' : 'Create Habit'}</Text>
-      </Pressable>
+      <Text style={styles.sectionTitle}>Identify with color</Text>
+      <ColorPicker selected={color} onSelect={setColor} />
     </ScrollView>
   );
 }
@@ -168,116 +175,152 @@ export default function HabitFormScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    backgroundColor: colors.background,
+    paddingTop: 52,
+    paddingHorizontal: 24,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backArrow: {
+    fontSize: 22,
+    color: colors.text,
+    fontFamily: fonts.bodyBold,
+  },
+  headerTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    letterSpacing: 2,
+    color: colors.text,
+  },
+  saveHeaderBtn: {
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  saveHeaderText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: colors.text,
+  },
+  divider: {
+    height: border.width,
+    backgroundColor: colors.border,
+    marginBottom: 24,
+  },
+  heroLabel: {
+    fontFamily: fonts.serif,
+    fontSize: 28,
+    color: colors.text,
+    marginBottom: 16,
+  },
+  nameInput: {
+    backgroundColor: colors.text,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    color: colors.surface,
+    fontFamily: fonts.body,
+    fontSize: 16,
     marginBottom: 28,
   },
-  backText: {
-    color: '#7c83ff',
-    fontSize: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
-  },
   label: {
-    color: '#888',
-    fontSize: 13,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.textMuted,
     marginBottom: 10,
     marginTop: 8,
   },
-  input: {
-    backgroundColor: '#161616',
-    borderRadius: 10,
-    padding: 14,
-    color: '#fff',
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#222',
-    marginBottom: 20,
-  },
-  freqRow: {
-    flexDirection: 'row',
-    gap: 8,
+  sectionTitle: {
+    fontFamily: fonts.serif,
+    fontSize: 22,
+    color: colors.text,
     marginBottom: 16,
+    marginTop: 28,
+  },
+  freqGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderWidth: border.width,
+    borderColor: colors.border,
   },
   freqBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#161616',
-    borderWidth: 1,
-    borderColor: '#222',
+    width: '50%',
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: border.width / 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   freqBtnActive: {
-    backgroundColor: '#1a1830',
-    borderColor: '#7c83ff',
+    backgroundColor: colors.primary,
   },
   freqBtnText: {
-    color: '#888',
-    fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: colors.textMuted,
   },
   freqBtnTextActive: {
-    color: '#7c83ff',
+    color: colors.text,
   },
   weekRow: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 8,
   },
   dayBtn: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: '#1a1a1a',
+    paddingVertical: 10,
+    borderWidth: border.width,
+    borderColor: colors.border,
     alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  dayBtnActive: {
+    backgroundColor: colors.text,
   },
   dayBtnText: {
-    color: '#666',
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
+    color: colors.textMuted,
+    fontSize: 11,
+  },
+  dayBtnTextActive: {
+    color: colors.surface,
   },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 8,
   },
   customLabel: {
-    color: '#888',
+    fontFamily: fonts.body,
+    color: colors.textMuted,
     fontSize: 15,
   },
   customInput: {
-    backgroundColor: '#161616',
-    borderRadius: 8,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.text,
     padding: 10,
-    color: '#fff',
+    color: colors.surface,
+    fontFamily: fonts.mono,
     fontSize: 16,
     width: 60,
     textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  saveBtn: {
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  saveBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
   },
 });

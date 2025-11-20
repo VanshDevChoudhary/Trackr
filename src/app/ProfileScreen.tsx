@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Pressable, ActivityIndicator,
+  View, Text, StyleSheet, Pressable, ScrollView,
+  TextInput, ActivityIndicator,
 } from 'react-native';
 import { useRealm, useQuery } from '@realm/react';
 import { useAuth } from '../context/AuthContext';
 import { useSyncStatus } from '../context/SyncContext';
 import { UserProfile, SyncLog } from '../db/schema';
 import { createRecord, updateRecord } from '../db/writeHelper';
+import { colors, fonts, border } from '../theme';
 
 const APP_VERSION = '1.0.0';
 
@@ -49,6 +50,7 @@ export default function ProfileScreen() {
   }, [profile?.dailyStepGoal, profile?.weeklyWorkoutGoal]);
 
   const displayName = profile?.name || user?.name || 'User';
+  const initials = displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   function startEditName() {
     setNameInput(profile?.name || user?.name || '');
@@ -92,154 +94,167 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
-      <Text style={styles.title}>Profile</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>PROFILE</Text>
+      </View>
+      <View style={styles.divider} />
 
-      <View style={styles.identitySection}>
+      {/* Avatar section */}
+      <View style={styles.avatarSection}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {displayName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          {editingName ? (
-            <View style={styles.nameEditRow}>
-              <TextInput
-                style={styles.nameInput}
-                value={nameInput}
-                onChangeText={setNameInput}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={saveName}
-                placeholder="Your name"
-                placeholderTextColor="#555"
-              />
-              <Pressable onPress={saveName} style={styles.saveBtn}>
-                <Text style={styles.saveBtnText}>Save</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable onPress={startEditName}>
-              <Text style={styles.name}>{displayName}</Text>
-              <Text style={styles.editHint}>tap to edit</Text>
-            </Pressable>
-          )}
-          <Text style={styles.email}>{user?.email}</Text>
-        </View>
-      </View>
-
-      <Text style={styles.sectionLabel}>Goals</Text>
-      <View style={styles.card}>
-        <View style={styles.goalRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.goalTitle}>Daily Steps</Text>
-            <Text style={styles.goalValue}>{stepGoal.toLocaleString()}</Text>
-          </View>
-          <View style={styles.stepperRow}>
-            <Pressable
-              style={styles.stepperBtn}
-              onPress={() => adjustStepGoal(-1000)}
-            >
-              <Text style={styles.stepperText}>−</Text>
-            </Pressable>
-            <Pressable
-              style={styles.stepperBtn}
-              onPress={() => adjustStepGoal(1000)}
-            >
-              <Text style={styles.stepperText}>+</Text>
-            </Pressable>
-          </View>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.goalRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.goalTitle}>Weekly Workouts</Text>
-            <Text style={styles.goalValue}>{workoutGoal}</Text>
-          </View>
-          <View style={styles.stepperRow}>
-            <Pressable
-              style={styles.stepperBtn}
-              onPress={() => adjustWorkoutGoal(-1)}
-            >
-              <Text style={styles.stepperText}>−</Text>
-            </Pressable>
-            <Pressable
-              style={styles.stepperBtn}
-              onPress={() => adjustWorkoutGoal(1)}
-            >
-              <Text style={styles.stepperText}>+</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      <Text style={styles.sectionLabel}>Sync</Text>
-      <View style={styles.card}>
-        <View style={styles.syncRow}>
-          <Text style={styles.syncLabel}>Status</Text>
-          <View style={styles.statusBadge}>
-            <View style={[
-              styles.statusDot,
-              syncStatus === 'idle' && { backgroundColor: '#4ade80' },
-              syncStatus === 'syncing' && { backgroundColor: '#7c83ff' },
-              syncStatus === 'offline' && { backgroundColor: '#888' },
-              syncStatus === 'error' && { backgroundColor: '#ff4d4d' },
-            ]} />
-            <Text style={styles.syncValue}>{syncStatus}</Text>
-          </View>
-        </View>
-        <View style={styles.syncRow}>
-          <Text style={styles.syncLabel}>Last synced</Text>
-          <Text style={styles.syncValue}>
-            {lastSyncAt ? formatTime(lastSyncAt) : 'never'}
-          </Text>
-        </View>
-        <View style={styles.syncRow}>
-          <Text style={styles.syncLabel}>Pending changes</Text>
-          <Text style={[styles.syncValue, pendingRecords > 0 && { color: '#f0ad4e' }]}>
-            {pendingRecords}
-          </Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.syncBtn, syncing && { opacity: 0.6 }]}
-          onPress={triggerSync}
-          disabled={syncing}
-        >
-          {syncing ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.syncBtnText}>Sync Now</Text>
-          )}
-        </TouchableOpacity>
-
-        {syncLogs.length > 0 && (
-          <>
-            <Text style={styles.logHeader}>Recent</Text>
-            {syncLogs.map((log) => (
-              <View key={log._id} style={styles.logRow}>
-                <View style={[
-                  styles.logDot,
-                  log.status === 'success' ? { backgroundColor: '#4ade80' } : { backgroundColor: '#ff4d4d' },
-                ]} />
-                <Text style={styles.logTime}>{formatTime(log.timestamp)}</Text>
-                <Text style={styles.logDetail}>
-                  {log.status === 'success'
-                    ? `↑${log.recordsPushed} ↓${log.recordsPulled}${log.conflicts > 0 ? ` ⚡${log.conflicts}` : ''}`
-                    : log.errorMessage ?? 'failed'}
-                </Text>
-              </View>
-            ))}
-          </>
+        {editingName ? (
+          <View style={styles.nameEditRow}>
+            <TextInput
+              style={styles.nameInput}
+              value={nameInput}
+              onChangeText={setNameInput}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={saveName}
+              placeholder="Your name"
+              placeholderTextColor={colors.textLight}
+            />
+            <Pressable onPress={saveName} style={styles.saveBtn}>
+              <Text style={styles.saveBtnText}>SAVE</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={startEditName}>
+            <Text style={styles.name}>{displayName}</Text>
+          </Pressable>
         )}
+        <Text style={styles.email}>@{user?.email?.split('@')[0]}</Text>
+
+        <Pressable style={styles.editProfileBtn} onPress={startEditName}>
+          <Text style={styles.editProfileText}>EDIT PROFILE</Text>
+        </Pressable>
+      </View>
+
+      {/* Stats row */}
+      <View style={styles.statsRow}>
+        <View style={[styles.statCell, styles.statBorderRight]}>
+          <Text style={styles.statValue}>{stepGoal.toLocaleString()}</Text>
+          <Text style={styles.statLabel}>STEPS</Text>
+        </View>
+        <View style={[styles.statCell, styles.statBorderRight]}>
+          <Text style={styles.statValue}>{workoutGoal}</Text>
+          <Text style={styles.statLabel}>GOALS</Text>
+        </View>
+        <View style={styles.statCell}>
+          <Text style={styles.statValue}>{pendingRecords}</Text>
+          <Text style={styles.statLabel}>PENDING</Text>
+        </View>
+      </View>
+
+      {/* Goals section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Active Goals</Text>
+        </View>
+
+        <View style={styles.goalCard}>
+          <View style={styles.goalCardInfo}>
+            <Text style={styles.goalName}>Daily Steps</Text>
+            <Text style={styles.goalMeta}>
+              Target: {stepGoal.toLocaleString()}
+            </Text>
+          </View>
+          <View style={styles.stepperRow}>
+            <Pressable style={styles.stepperBtn} onPress={() => adjustStepGoal(-1000)}>
+              <Text style={styles.stepperText}>−</Text>
+            </Pressable>
+            <Pressable style={[styles.stepperBtn, styles.stepperBtnActive]} onPress={() => adjustStepGoal(1000)}>
+              <Text style={styles.stepperText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.goalCard}>
+          <View style={styles.goalCardInfo}>
+            <Text style={styles.goalName}>Weekly Workouts</Text>
+            <Text style={styles.goalMeta}>
+              Target: {workoutGoal}/week
+            </Text>
+          </View>
+          <View style={styles.stepperRow}>
+            <Pressable style={styles.stepperBtn} onPress={() => adjustWorkoutGoal(-1)}>
+              <Text style={styles.stepperText}>−</Text>
+            </Pressable>
+            <Pressable style={[styles.stepperBtn, styles.stepperBtnActive]} onPress={() => adjustWorkoutGoal(1)}>
+              <Text style={styles.stepperText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
+      {/* Sync section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>SYNC</Text>
+        <View style={styles.card}>
+          <View style={styles.syncRow}>
+            <Text style={styles.syncLabel}>Status</Text>
+            <View style={styles.statusBadge}>
+              <View style={[
+                styles.statusDot,
+                syncStatus === 'idle' && { backgroundColor: colors.success },
+                syncStatus === 'syncing' && { backgroundColor: colors.primary },
+                syncStatus === 'offline' && { backgroundColor: colors.textLight },
+                syncStatus === 'error' && { backgroundColor: colors.error },
+              ]} />
+              <Text style={styles.syncValue}>{syncStatus.toUpperCase()}</Text>
+            </View>
+          </View>
+          <View style={styles.syncRow}>
+            <Text style={styles.syncLabel}>Last synced</Text>
+            <Text style={styles.syncValue}>
+              {lastSyncAt ? formatTime(lastSyncAt) : 'never'}
+            </Text>
+          </View>
+
+          <Pressable
+            style={[styles.syncBtn, syncing && { opacity: 0.6 }]}
+            onPress={triggerSync}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <ActivityIndicator size="small" color={colors.text} />
+            ) : (
+              <Text style={styles.syncBtnText}>SYNC NOW</Text>
+            )}
+          </Pressable>
+
+          {syncLogs.length > 0 && (
+            <>
+              <Text style={styles.logHeader}>RECENT</Text>
+              {syncLogs.map((log) => (
+                <View key={log._id} style={styles.logRow}>
+                  <View style={[
+                    styles.logDot,
+                    log.status === 'success' ? { backgroundColor: colors.success } : { backgroundColor: colors.error },
+                  ]} />
+                  <Text style={styles.logTime}>{formatTime(log.timestamp)}</Text>
+                  <Text style={styles.logDetail}>
+                    {log.status === 'success'
+                      ? `↑${log.recordsPushed} ↓${log.recordsPulled}${log.conflicts > 0 ? ` ⚡${log.conflicts}` : ''}`
+                      : log.errorMessage ?? 'failed'}
+                  </Text>
+                </View>
+              ))}
+            </>
+          )}
+        </View>
       </View>
 
       <View style={styles.versionRow}>
-        <Text style={styles.versionText}>trackr v{APP_VERSION}</Text>
+        <Text style={styles.versionText}>TRACKR V{APP_VERSION}</Text>
       </View>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={styles.logoutText}>Log out</Text>
-      </TouchableOpacity>
+      <Pressable style={styles.logoutBtn} onPress={logout}>
+        <Text style={styles.logoutText}>LOG OUT</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -247,129 +262,197 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    backgroundColor: colors.background,
+    paddingTop: 52,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 24,
-  },
-  identitySection: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
-    marginBottom: 32,
-    gap: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
+  },
+  headerTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    letterSpacing: 2,
+    color: colors.text,
+  },
+  divider: {
+    height: border.width,
+    backgroundColor: colors.border,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 24,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#7c83ff',
+    width: 100,
+    height: 100,
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
   },
   avatarText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 32,
   },
   name: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  editHint: {
-    fontSize: 11,
-    color: '#555',
-    marginTop: 1,
+    fontFamily: fonts.serif,
+    fontSize: 24,
+    color: colors.text,
+    textAlign: 'center',
   },
   email: {
+    fontFamily: fonts.monoMedium,
     fontSize: 13,
-    color: '#888',
+    color: colors.textMuted,
     marginTop: 4,
+    textAlign: 'center',
+  },
+  editProfileBtn: {
+    borderWidth: border.width,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  editProfileText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: colors.text,
   },
   nameEditRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    paddingHorizontal: 24,
+    width: '100%',
   },
   nameInput: {
     flex: 1,
-    backgroundColor: '#161616',
-    borderRadius: 8,
+    borderWidth: border.width,
+    borderColor: colors.border,
     padding: 10,
-    color: '#fff',
+    color: colors.text,
+    fontFamily: fonts.body,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#333',
   },
   saveBtn: {
-    backgroundColor: '#7c83ff',
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
   saveBtnText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 11,
+    letterSpacing: 1.5,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    borderTopWidth: border.width,
+    borderBottomWidth: border.width,
+    borderColor: colors.border,
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  statBorderRight: {
+    borderRightWidth: border.width,
+    borderRightColor: colors.border,
+  },
+  statValue: {
+    fontFamily: fonts.mono,
+    fontSize: 22,
+    color: colors.text,
+  },
+  statLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    color: colors.textLight,
+    marginTop: 4,
+  },
+  section: {
+    paddingHorizontal: 24,
+    marginTop: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontFamily: fonts.serif,
+    fontSize: 22,
+    color: colors.text,
   },
   sectionLabel: {
-    color: '#888',
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.textMuted,
+    marginBottom: 12,
   },
-  card: {
-    backgroundColor: '#161616',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  goalRow: {
+  goalCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
+    marginBottom: -border.width,
   },
-  goalTitle: {
-    color: '#ccc',
-    fontSize: 14,
+  goalCardInfo: {
+    flex: 1,
   },
-  goalValue: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-    marginTop: 2,
+  goalName: {
+    fontFamily: fonts.bodySemiBold,
+    color: colors.text,
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  goalMeta: {
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 12,
   },
   stepperRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   stepperBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#222',
+    width: 36,
+    height: 36,
+    borderWidth: border.width,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  stepperBtnActive: {
+    backgroundColor: colors.primary,
   },
   stepperText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '500',
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 18,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#222',
-    marginVertical: 12,
+  card: {
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
   },
   syncRow: {
     flexDirection: 'row',
@@ -378,13 +461,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   syncLabel: {
-    color: '#888',
+    fontFamily: fonts.body,
+    color: colors.textMuted,
     fontSize: 14,
   },
   syncValue: {
-    color: '#fff',
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
+    fontFamily: fonts.monoMedium,
+    color: colors.text,
+    fontSize: 13,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -395,25 +479,26 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#888',
   },
   syncBtn: {
-    backgroundColor: '#7c83ff',
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 12,
   },
   syncBtnText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: colors.text,
   },
   logHeader: {
-    color: '#555',
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    color: colors.textMuted,
     marginTop: 16,
     marginBottom: 8,
   },
@@ -429,36 +514,40 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   logTime: {
-    color: '#666',
-    fontSize: 12,
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 11,
     width: 60,
-    fontVariant: ['tabular-nums'],
   },
   logDetail: {
-    color: '#aaa',
-    fontSize: 12,
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
+    fontSize: 11,
     flex: 1,
   },
   versionRow: {
     alignItems: 'center',
+    marginTop: 32,
     marginBottom: 16,
   },
   versionText: {
-    color: '#444',
-    fontSize: 12,
+    fontFamily: fonts.monoMedium,
+    fontSize: 9,
+    letterSpacing: 2,
+    color: colors.textLight,
   },
   logoutBtn: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 10,
-    padding: 16,
+    marginHorizontal: 24,
+    borderWidth: border.width,
+    borderColor: colors.error,
+    paddingVertical: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
     marginBottom: 20,
   },
   logoutText: {
-    color: '#ff4d4d',
-    fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    letterSpacing: 1.5,
+    color: colors.error,
   },
 });

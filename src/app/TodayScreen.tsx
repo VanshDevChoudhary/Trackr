@@ -14,6 +14,7 @@ import { getDeviceId } from '../lib/api';
 import { isDueOn, parseFrequency, toDateStr } from '../lib/streaks';
 import StepCounter from '../components/StepCounter';
 import WeeklyStepsChart from '../components/WeeklyStepsChart';
+import { colors, fonts, border } from '../theme';
 
 const STEP_GOAL = 8000;
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -23,6 +24,12 @@ function daysAgo(n: number): Date {
   d.setDate(d.getDate() - n);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+function formatDate(date: Date): string {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
 }
 
 export default function TodayScreen() {
@@ -46,7 +53,6 @@ export default function TodayScreen() {
     c.filtered('userId == $0 AND date == $1', user!.id, todayStr),
   );
 
-  // filter to habits due today
   const dueToday: Habit[] = [];
   for (const h of habits) {
     const freq = parseFrequency(h.frequency);
@@ -64,7 +70,6 @@ export default function TodayScreen() {
   const completedIds = new Set<string>();
   for (const c of todayCompletions) completedIds.add(c.habitId);
 
-  // build weekly chart data
   const snapshotMap = new Map<string, number>();
   for (const s of weekSnapshots) snapshotMap.set(s.date, s.steps);
 
@@ -107,7 +112,6 @@ export default function TodayScreen() {
     const cal = await healthBridge.getCalories(new Date());
     setCalories(cal);
 
-    // rough active minutes estimate (~100 steps/min walking)
     const mins = Math.min(Math.floor(steps / 100), 180);
     setActiveMinutes(mins);
 
@@ -137,7 +141,6 @@ export default function TodayScreen() {
     };
   }, []);
 
-  // save snapshot when steps change meaningfully
   const lastSaved = useRef(0);
   useEffect(() => {
     if (steps - lastSaved.current > 50 && permGranted) {
@@ -189,22 +192,28 @@ export default function TodayScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#7c83ff"
-          colors={['#7c83ff']}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
         />
       }
     >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerLogo}>trackr</Text>
+      </View>
+
       <Text style={styles.title}>Today</Text>
+      <Text style={styles.dateLabel}>{formatDate(today).toUpperCase()}</Text>
 
       {permGranted === false && (
         <View style={styles.permCard}>
-          <Text style={styles.permEmoji}>🔒</Text>
-          <Text style={styles.permTitle}>Health data access needed</Text>
+          <Text style={styles.permLock}>🔒</Text>
+          <Text style={styles.permTitle}>Health Data Locked</Text>
           <Text style={styles.permText}>
-            Grant access to see your steps, calories, and activity data on this screen.
+            To view your activity, sleep, and heart rate trends, we need your permission to access HealthKit.
           </Text>
           <Pressable style={styles.permBtn} onPress={retryPermissions}>
-            <Text style={styles.permBtnText}>Grant Access</Text>
+            <Text style={styles.permBtnText}>Grant Access  →</Text>
           </Pressable>
         </View>
       )}
@@ -213,28 +222,48 @@ export default function TodayScreen() {
         <StepCounter steps={steps} goal={STEP_GOAL} />
       )}
 
+      {/* Stats Row */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>👟</Text>
-          <Text style={styles.statValue}>{steps.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Steps</Text>
-        </View>
-        <View style={styles.statCard}>
           <Text style={styles.statIcon}>🔥</Text>
-          <Text style={styles.statValue}>{calories.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Calories</Text>
+          <View style={styles.statBottom}>
+            <Text style={styles.statValue}>{calories.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>KCAL</Text>
+          </View>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statIcon}>⚡</Text>
-          <Text style={styles.statValue}>{activeMinutes}</Text>
-          <Text style={styles.statLabel}>Active min</Text>
+          <Text style={styles.statIcon}>📍</Text>
+          <View style={styles.statBottom}>
+            <Text style={styles.statValue}>{(steps * 0.0007).toFixed(1)}</Text>
+            <Text style={styles.statLabel}>KM</Text>
+          </View>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statIcon}>⏱</Text>
+          <View style={styles.statBottom}>
+            <Text style={styles.statValue}>{activeMinutes}</Text>
+            <Text style={styles.statLabel}>MIN</Text>
+          </View>
         </View>
       </View>
+
+      {/* Weekly Goal Banner */}
+      {permGranted !== false && (
+        <View style={styles.weeklyBanner}>
+          <View>
+            <Text style={styles.weeklyLabel}>WEEKLY GOAL</Text>
+            <Text style={styles.weeklyTitle}>Activity Streak</Text>
+          </View>
+          <Text style={styles.weeklyCount}>
+            {String(weekData.filter(d => d.steps >= STEP_GOAL).length).padStart(2, '0')}
+          </Text>
+        </View>
+      )}
 
       {dueToday.length > 0 ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Habits</Text>
+            <Text style={styles.sectionTitle}>HABITS</Text>
             <Text style={styles.sectionCount}>
               {completedCount}/{dueToday.length}
             </Text>
@@ -250,7 +279,6 @@ export default function TodayScreen() {
         </View>
       ) : habits.length === 0 ? (
         <EmptyCard
-          icon="🎯"
           title="No habits yet"
           subtitle="Create your first habit to start tracking"
         />
@@ -262,7 +290,6 @@ export default function TodayScreen() {
         </View>
       ) : permGranted && (
         <EmptyCard
-          icon="📊"
           title="No step data yet"
           subtitle="Waiting for health data to populate..."
         />
@@ -270,7 +297,6 @@ export default function TodayScreen() {
 
       {recentWorkouts.length === 0 && (
         <EmptyCard
-          icon="💪"
           title="No workouts logged"
           subtitle="Log a workout to see it here"
         />
@@ -323,12 +349,12 @@ function HabitCheckRow({
       <Pressable style={styles.habitRow} onPress={handlePress}>
         <Text style={styles.habitIcon}>{habit.icon}</Text>
         <Text style={[styles.habitName, done && styles.habitDone]}>
-          {habit.name}
+          {habit.name.toUpperCase()}
         </Text>
         <View
           style={[
             styles.habitCheck,
-            done && { backgroundColor: habit.color, borderColor: habit.color },
+            done && { backgroundColor: colors.primary, borderColor: colors.border },
           ]}
         >
           {done && (
@@ -348,17 +374,14 @@ function HabitCheckRow({
 }
 
 function EmptyCard({
-  icon,
   title,
   subtitle,
 }: {
-  icon: string;
   title: string;
   subtitle: string;
 }) {
   return (
     <View style={styles.emptyCard}>
-      <Text style={styles.emptyIcon}>{icon}</Text>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptySubtitle}>{subtitle}</Text>
     </View>
@@ -368,83 +391,129 @@ function EmptyCard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    backgroundColor: colors.background,
+    paddingTop: 52,
+    paddingHorizontal: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  headerLogo: {
+    fontFamily: fonts.mono,
+    fontSize: 18,
+    color: colors.text,
+    letterSpacing: -0.5,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.serif,
+    fontSize: 64,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  dateLabel: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 11,
+    color: colors.textMuted,
+    letterSpacing: 2,
     marginBottom: 24,
   },
   statsRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#161616',
-    borderRadius: 14,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#222',
+    aspectRatio: 1,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 14,
+    justifyContent: 'space-between',
   },
   statIcon: {
+    fontSize: 16,
+  },
+  statBottom: {},
+  statValue: {
+    fontFamily: fonts.mono,
+    fontSize: 18,
+    color: colors.text,
+  },
+  statLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  weeklyBanner: {
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.primary,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  weeklyLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  weeklyTitle: {
+    fontFamily: fonts.serif,
+    fontSize: 22,
+    color: colors.text,
+  },
+  weeklyCount: {
+    fontFamily: fonts.mono,
+    fontSize: 32,
+    color: colors.text,
+  },
+  permCard: {
+    backgroundColor: '#1a1a2e',
+    borderWidth: border.width,
+    borderColor: colors.border,
+    padding: 32,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  permLock: {
+    fontSize: 28,
+    marginBottom: 16,
+  },
+  permTitle: {
+    fontFamily: fonts.bodyBold,
+    color: colors.surface,
     fontSize: 20,
     marginBottom: 8,
   },
-  statValue: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  statLabel: {
-    color: '#666',
-    fontSize: 11,
-    marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  permCard: {
-    backgroundColor: '#1a1520',
-    borderRadius: 14,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#332244',
-    alignItems: 'center',
-  },
-  permEmoji: {
-    fontSize: 32,
-    marginBottom: 12,
-  },
-  permTitle: {
-    color: '#e2d4f0',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
   permText: {
-    color: '#a78bba',
-    fontSize: 13,
-    lineHeight: 19,
+    fontFamily: fonts.body,
+    color: '#94a3b8',
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   permBtn: {
-    backgroundColor: '#7c83ff',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
   },
   permBtnText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.text,
+    fontSize: 15,
   },
   section: {
     marginBottom: 24,
@@ -456,76 +525,70 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: '#888',
-    fontSize: 13,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.textMuted,
   },
   sectionCount: {
-    color: '#555',
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
     fontSize: 13,
-    fontVariant: ['tabular-nums'],
   },
   habitRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#222',
+    backgroundColor: colors.surface,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    padding: 16,
+    marginBottom: -border.width,
   },
   habitIcon: {
-    fontSize: 20,
-    marginRight: 12,
+    fontSize: 18,
+    marginRight: 14,
   },
   habitName: {
     flex: 1,
-    color: '#fff',
+    fontFamily: fonts.bodySemiBold,
+    color: colors.text,
     fontSize: 15,
-    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   habitDone: {
-    color: '#888',
+    color: colors.textLight,
     textDecorationLine: 'line-through',
   },
   habitCheck: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    borderColor: '#444',
+    width: 28,
+    height: 28,
+    borderWidth: border.width,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkMark: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   emptyCard: {
-    backgroundColor: '#161616',
-    borderRadius: 14,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 28,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#222',
     alignItems: 'center',
   },
-  emptyIcon: {
-    fontSize: 28,
-    marginBottom: 10,
-  },
   emptyTitle: {
-    color: '#ccc',
+    fontFamily: fonts.bodySemiBold,
+    color: colors.text,
     fontSize: 15,
-    fontWeight: '600',
     marginBottom: 4,
   },
   emptySubtitle: {
-    color: '#666',
+    fontFamily: fonts.body,
+    color: colors.textMuted,
     fontSize: 13,
     textAlign: 'center',
   },
