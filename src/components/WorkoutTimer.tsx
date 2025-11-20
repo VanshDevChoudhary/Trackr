@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { colors, fonts, border } from '../theme';
 
 type Props = {
   onElapsed?: (seconds: number) => void;
@@ -13,8 +14,7 @@ function formatTime(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
-  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
-  return `${pad(m)}:${pad(s)}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
 export default function WorkoutTimer({ onElapsed }: Props) {
@@ -32,6 +32,8 @@ export default function WorkoutTimer({ onElapsed }: Props) {
   }, [onElapsed]);
 
   useEffect(() => {
+    // auto-start
+    start();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -60,64 +62,23 @@ export default function WorkoutTimer({ onElapsed }: Props) {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.time}>{formatTime(elapsed)}</Text>
-      <View style={styles.controls}>
-        {!running ? (
-          <Pressable style={styles.btn} onPress={start}>
-            <Text style={styles.btnText}>{elapsed > 0 ? 'Resume' : 'Start'}</Text>
-          </Pressable>
-        ) : (
-          <Pressable style={[styles.btn, styles.pauseBtn]} onPress={pause}>
-            <Text style={styles.btnText}>Pause</Text>
-          </Pressable>
-        )}
-        {elapsed > 0 && (
-          <Pressable style={[styles.btn, styles.resetBtn]} onPress={reset}>
-            <Text style={[styles.btnText, { color: '#aaa' }]}>Reset</Text>
-          </Pressable>
-        )}
-      </View>
-    </View>
+    <Pressable style={styles.timerBadge} onPress={running ? pause : start}>
+      <Text style={styles.timerText}>{formatTime(elapsed)}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#161616',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#222',
-    marginBottom: 16,
+  timerBadge: {
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
-  time: {
-    color: '#fff',
-    fontSize: 48,
-    fontWeight: '300',
-    fontVariant: ['tabular-nums'],
-    marginBottom: 20,
-  },
-  controls: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  btn: {
-    backgroundColor: '#7c83ff',
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  pauseBtn: {
-    backgroundColor: '#e6a817',
-  },
-  resetBtn: {
-    backgroundColor: '#2a2a2a',
-  },
-  btnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
+  timerText: {
+    fontFamily: fonts.mono,
+    fontSize: 14,
+    color: colors.text,
   },
 });

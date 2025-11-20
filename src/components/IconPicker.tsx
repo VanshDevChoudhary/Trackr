@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { colors, border } from '../theme';
 
 const ICONS = [
   '🏃', '🚴', '💪', '🧘', '🏋️', '🤸', '🏊', '⚽', '🎯', '🧗',
@@ -37,16 +38,15 @@ const styles = StyleSheet.create({
   cell: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: border.width,
+    borderColor: colors.borderLight,
   },
   selected: {
-    borderColor: '#7c83ff',
-    backgroundColor: '#1a1830',
+    borderColor: colors.border,
+    backgroundColor: colors.primary + '33',
   },
   icon: {
     fontSize: 22,

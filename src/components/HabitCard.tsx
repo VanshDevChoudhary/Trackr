@@ -3,6 +3,7 @@ import {
   View, Text, Pressable, StyleSheet,
   Animated, PanResponder, Alert,
 } from 'react-native';
+import { colors, fonts, border } from '../theme';
 
 type Props = {
   name: string;
@@ -61,21 +62,19 @@ export default function HabitCard({
   return (
     <View style={styles.wrapper}>
       <Pressable style={styles.deleteZone} onPress={confirmDelete}>
-        <Text style={styles.deleteText}>Delete</Text>
+        <Text style={styles.deleteText}>DELETE</Text>
       </Pressable>
 
       <Animated.View
         style={[styles.card, { transform: [{ translateX }] }]}
         {...panResponder.panHandlers}
       >
-        <View style={[styles.colorBar, { backgroundColor: color }]} />
-
         <Pressable style={styles.content} onPress={onPress}>
           <Text style={styles.icon}>{icon}</Text>
           <View style={styles.info}>
-            <Text style={styles.name}>{name}</Text>
+            <Text style={styles.name}>{name.toUpperCase()}</Text>
             {streak > 0 && (
-              <Text style={styles.streak}>{streak} day streak</Text>
+              <Text style={styles.streak}>{streak}d streak</Text>
             )}
           </View>
         </Pressable>
@@ -84,7 +83,7 @@ export default function HabitCard({
           <View
             style={[
               styles.checkbox,
-              isCompletedToday && { backgroundColor: color, borderColor: color },
+              isCompletedToday && { backgroundColor: colors.primary },
             ]}
           >
             {isCompletedToday && <Text style={styles.check}>✓</Text>}
@@ -97,7 +96,7 @@ export default function HabitCard({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 10,
+    marginBottom: -border.width,
     position: 'relative',
   },
   deleteZone: {
@@ -106,68 +105,64 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 80,
-    backgroundColor: '#dc2626',
-    borderRadius: 12,
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
   },
   deleteText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
+    fontFamily: fonts.bodyBold,
+    color: colors.surface,
+    fontSize: 10,
+    letterSpacing: 2,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#222',
+    backgroundColor: colors.surface,
+    borderWidth: border.width,
+    borderColor: colors.border,
     overflow: 'hidden',
-  },
-  colorBar: {
-    width: 4,
-    alignSelf: 'stretch',
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    gap: 12,
+    padding: 18,
+    gap: 14,
   },
   icon: {
-    fontSize: 24,
+    fontSize: 20,
   },
   info: {
     flex: 1,
   },
   name: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemiBold,
+    color: colors.text,
+    fontSize: 15,
+    letterSpacing: 0.5,
   },
   streak: {
-    color: '#888',
-    fontSize: 12,
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 11,
     marginTop: 2,
   },
   toggle: {
-    paddingRight: 14,
-    paddingVertical: 14,
+    paddingRight: 18,
+    paddingVertical: 18,
   },
   checkbox: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    borderColor: '#444',
+    width: 28,
+    height: 28,
+    borderWidth: border.width,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   check: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
 });

@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSyncStatus } from '../context/SyncContext';
+import { colors, fonts, border } from '../theme';
 
-const STATUS_COLORS = {
+const STATUS_BG = {
   idle: 'transparent',
-  syncing: '#2563eb',
-  offline: '#ca8a04',
-  error: '#dc2626',
+  syncing: colors.primary,
+  offline: colors.borderLight,
+  error: colors.primary,
 } as const;
 
 const STATUS_TEXT = {
   idle: '',
-  syncing: 'Syncing...',
-  offline: 'Offline',
-  error: 'Sync error',
+  syncing: 'SYNCING',
+  offline: 'OFFLINE',
+  error: 'SYNC INTERRUPTED',
 } as const;
 
 export default function SyncBanner() {
@@ -22,33 +23,40 @@ export default function SyncBanner() {
 
   if (syncStatus === 'idle') return null;
 
-  const bg = STATUS_COLORS[syncStatus];
+  const bg = STATUS_BG[syncStatus];
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
-      <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.7}>
+      <Pressable onPress={() => setExpanded(!expanded)}>
         <Text style={styles.label}>{STATUS_TEXT[syncStatus]}</Text>
-      </TouchableOpacity>
+      </Pressable>
 
       {expanded && (
         <View style={styles.details}>
           {lastSyncAt && (
-            <Text style={styles.detail}>
-              Last sync: {formatTime(lastSyncAt)}
-            </Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>LAST SYNC</Text>
+              <Text style={styles.detailValue}>{formatTime(lastSyncAt)}</Text>
+            </View>
           )}
           {pendingRecords > 0 && (
-            <Text style={styles.detail}>
-              {pendingRecords} pending {pendingRecords === 1 ? 'record' : 'records'}
-            </Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>PENDING</Text>
+              <Text style={styles.detailValue}>{pendingRecords} records</Text>
+            </View>
           )}
           {errorMessage && (
-            <Text style={styles.detail}>{errorMessage}</Text>
+            <Text style={styles.errorMsg}>{errorMessage}</Text>
           )}
           {syncStatus === 'error' && (
-            <TouchableOpacity onPress={triggerSync} style={styles.retryBtn}>
-              <Text style={styles.retryText}>Retry</Text>
-            </TouchableOpacity>
+            <View style={styles.btnRow}>
+              <Pressable onPress={triggerSync} style={styles.retryBtn}>
+                <Text style={styles.retryText}>RETRY</Text>
+              </Pressable>
+              <Pressable onPress={() => setExpanded(false)} style={styles.dismissBtn}>
+                <Text style={styles.dismissText}>DISMISS</Text>
+              </Pressable>
+            </View>
           )}
         </View>
       )}
@@ -66,37 +74,78 @@ function formatTime(date: Date): string {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderBottomWidth: border.width,
+    borderBottomColor: colors.border,
   },
   label: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 11,
+    letterSpacing: 2,
     textAlign: 'center',
   },
   details: {
-    marginTop: 4,
-    paddingTop: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.3)',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: border.width,
+    borderTopColor: 'rgba(0,0,0,0.1)',
   },
-  detail: {
-    color: 'rgba(255,255,255,0.85)',
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  detailLabel: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 11,
+    letterSpacing: 1,
+    color: colors.text,
+  },
+  detailValue: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 11,
+    color: colors.text,
+  },
+  errorMsg: {
+    fontFamily: fonts.body,
+    color: colors.error,
     fontSize: 12,
-    marginBottom: 2,
+    marginTop: 4,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 4,
   },
   retryBtn: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 4,
+    flex: 1,
+    backgroundColor: colors.text,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   retryText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
+    color: colors.surface,
+    fontSize: 11,
+    letterSpacing: 1.5,
+  },
+  dismissBtn: {
+    flex: 1,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dismissText: {
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 11,
+    letterSpacing: 1.5,
   },
 });

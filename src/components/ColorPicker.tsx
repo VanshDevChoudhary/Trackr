@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
+import { colors, border } from '../theme';
 
-const COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e',
-  '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899',
-  '#7c83ff', '#6b7280',
+const PALETTE = [
+  '#FFDB58', '#22c55e', '#38bdf8', '#f87171', '#a78bfa',
+  '#f97316', '#0f172a',
 ];
 
 type Props = {
@@ -15,11 +15,11 @@ type Props = {
 export default function ColorPicker({ selected, onSelect }: Props) {
   return (
     <View style={styles.row}>
-      {COLORS.map((color) => (
+      {PALETTE.map((color) => (
         <Pressable
           key={color}
           style={[
-            styles.circle,
+            styles.swatch,
             { backgroundColor: color },
             selected === color && styles.selected,
           ]}
@@ -36,14 +36,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
   },
-  circle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 3,
+  swatch: {
+    width: 44,
+    height: 44,
+    borderWidth: border.width,
     borderColor: 'transparent',
   },
   selected: {
-    borderColor: '#fff',
+    borderColor: colors.border,
   },
 });

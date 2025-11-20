@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { Frequency } from '../types';
 import { isDueOn, toDateStr } from '../lib/streaks';
+import { colors, fonts } from '../theme';
 
 type Props = {
   completions: string[];
@@ -43,9 +44,9 @@ export default function StreakCalendar({ completions, frequency, createdAt }: Pr
         const done = completionSet.has(ds);
         const due = !isFuture && isDueOn(d, frequency, createdAt);
 
-        let color = '#1a1a1a';
-        if (!isFuture && done) color = '#4ade80';
-        else if (due) color = '#2a2a2a';
+        let color: string = colors.background;
+        if (!isFuture && done) color = colors.primary;
+        else if (due) color = colors.borderLight;
 
         if (i === 0 && d.getMonth() !== prevMonth && !isFuture) {
           labels.push({
@@ -111,8 +112,9 @@ const styles = StyleSheet.create({
     width: CELL_SIZE + GAP,
   },
   monthText: {
-    color: '#666',
-    fontSize: 10,
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 9,
   },
   grid: {
     flexDirection: 'row',
@@ -125,7 +127,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayLabelText: {
-    color: '#555',
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
     fontSize: 9,
     width: 14,
     textAlign: 'right',
@@ -137,6 +140,5 @@ const styles = StyleSheet.create({
   cell: {
     width: CELL_SIZE,
     height: CELL_SIZE,
-    borderRadius: 2,
   },
 });

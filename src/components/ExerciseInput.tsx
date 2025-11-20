@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
 import SetRow from './SetRow';
+import { colors, fonts, border } from '../theme';
 
 export type SetData = { reps: string; weight: string; completed: boolean };
 
@@ -20,16 +21,26 @@ export default function ExerciseInput({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TextInput
-          style={styles.nameInput}
-          value={name}
-          onChangeText={onNameChange}
-          placeholder="Exercise name"
-          placeholderTextColor="#666"
-        />
+        <Text style={styles.currentLabel}>CURRENT</Text>
         <Pressable onPress={onRemove} hitSlop={8}>
-          <Text style={styles.removeExercise}>Remove</Text>
+          <Text style={styles.menuDots}>⋮</Text>
         </Pressable>
+      </View>
+
+      <TextInput
+        style={styles.nameInput}
+        value={name}
+        onChangeText={onNameChange}
+        placeholder="Exercise name"
+        placeholderTextColor={colors.textLight}
+      />
+
+      {/* Table header */}
+      <View style={styles.tableHeader}>
+        <Text style={[styles.colLabel, { width: 36 }]}>SET</Text>
+        <Text style={[styles.colLabel, { flex: 1 }]}>PREVIOUS</Text>
+        <Text style={[styles.colLabel, { width: 72 }]}>WEIGHT</Text>
+        <Text style={[styles.colLabel, { width: 56 }]}>REPS</Text>
       </View>
 
       {sets.map((set, i) => (
@@ -46,8 +57,8 @@ export default function ExerciseInput({
         />
       ))}
 
-      <Pressable style={styles.addSet} onPress={onAddSet}>
-        <Text style={styles.addSetText}>+ Add Set</Text>
+      <Pressable style={styles.completeBtn} onPress={onAddSet}>
+        <Text style={styles.completeBtnText}>+ ADD SET</Text>
       </Pressable>
     </View>
   );
@@ -55,38 +66,59 @@ export default function ExerciseInput({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#222',
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 20,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  currentLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: colors.textMuted,
+  },
+  menuDots: {
+    fontSize: 20,
+    color: colors.textMuted,
   },
   nameInput: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.serif,
+    color: colors.text,
+    fontSize: 22,
     paddingVertical: 4,
-    marginRight: 12,
+    marginBottom: 16,
   },
-  removeExercise: {
-    color: '#dc2626',
-    fontSize: 13,
-  },
-  addSet: {
-    paddingVertical: 8,
+  tableHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingBottom: 8,
+    marginBottom: 4,
   },
-  addSetText: {
-    color: '#7c83ff',
-    fontSize: 13,
-    fontWeight: '500',
+  colLabel: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: colors.textLight,
+  },
+  completeBtn: {
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  completeBtnText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    letterSpacing: 1.5,
+    color: colors.text,
   },
 });

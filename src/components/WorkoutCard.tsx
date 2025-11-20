@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { colors, fonts, border } from '../theme';
 
 type Props = {
   type: string;
@@ -9,12 +10,6 @@ type Props = {
   exerciseCount: number;
   source: string;
   onPress: () => void;
-};
-
-const typeIcons: Record<string, string> = {
-  strength: '🏋️',
-  cardio: '🏃',
-  flexibility: '🧘',
 };
 
 function formatDuration(sec: number): string {
@@ -40,27 +35,35 @@ function formatDate(d: Date): string {
 export default function WorkoutCard({
   type, name, date, durationSeconds, exerciseCount, source, onPress,
 }: Props) {
-  const icon = typeIcons[type] ?? '💪';
   const displayName = name || type.charAt(0).toUpperCase() + type.slice(1);
+  const typeLabel = type.toUpperCase();
 
   return (
     <Pressable style={styles.card} onPress={onPress}>
-      <Text style={styles.icon}>{icon}</Text>
-      <View style={styles.info}>
+      <View style={styles.typeBadge}>
+        <Text style={styles.typeBadgeText}>{typeLabel}</Text>
+      </View>
+
+      <View style={styles.body}>
         <Text style={styles.name}>{displayName}</Text>
         <View style={styles.metaRow}>
-          <Text style={styles.meta}>{formatDate(date)}</Text>
           {durationSeconds != null && durationSeconds > 0 && (
-            <Text style={styles.meta}> · {formatDuration(durationSeconds)}</Text>
+            <Text style={styles.meta}>⏱ {formatDuration(durationSeconds)}</Text>
           )}
           {exerciseCount > 0 && (
-            <Text style={styles.meta}> · {exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}</Text>
+            <Text style={styles.meta}>{exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}</Text>
           )}
+          <Text style={styles.metaDate}>{formatDate(date)}</Text>
         </View>
       </View>
+
+      <Pressable style={styles.viewBtn} onPress={onPress}>
+        <Text style={styles.viewBtnText}>VIEW DATA LOGS</Text>
+      </Pressable>
+
       {source !== 'manual' && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{source === 'healthkit' ? 'HK' : 'HC'}</Text>
+        <View style={styles.sourceBadge}>
+          <Text style={styles.sourceBadgeText}>{source === 'healthkit' ? 'HK' : 'HC'}</Text>
         </View>
       )}
     </Pressable>
@@ -69,44 +72,75 @@ export default function WorkoutCard({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#222',
-    gap: 12,
+    backgroundColor: colors.surface,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    marginBottom: -border.width,
+    padding: 20,
+    position: 'relative',
   },
-  icon: {
-    fontSize: 24,
+  typeBadge: {
+    backgroundColor: colors.primary,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 12,
   },
-  info: {
-    flex: 1,
+  typeBadgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    color: colors.text,
+  },
+  body: {
+    marginBottom: 14,
   },
   name: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.serif,
+    color: colors.text,
+    fontSize: 20,
+    marginBottom: 4,
   },
   metaRow: {
     flexDirection: 'row',
-    marginTop: 3,
+    gap: 12,
+    flexWrap: 'wrap',
   },
   meta: {
-    color: '#888',
-    fontSize: 12,
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 11,
   },
-  badge: {
-    backgroundColor: '#7c83ff22',
-    borderRadius: 6,
+  metaDate: {
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
+    fontSize: 11,
+  },
+  viewBtn: {
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  viewBtnText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: colors.text,
+  },
+  sourceBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: colors.borderLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  badgeText: {
-    color: '#7c83ff',
-    fontSize: 11,
-    fontWeight: '600',
+  sourceBadgeText: {
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 10,
+    letterSpacing: 1,
   },
 });

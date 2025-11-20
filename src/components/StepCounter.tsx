@@ -1,17 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { colors, fonts, border } from '../theme';
 
 type Props = {
   steps: number;
   goal: number;
 };
 
-const RING_SIZE = 180;
-const STROKE = 10;
+const BOX_SIZE = '100%';
 
 export default function StepCounter({ steps, goal }: Props) {
   const displayVal = useRef(new Animated.Value(0)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
 
   const pct = Math.min(steps / goal, 1);
 
@@ -24,45 +23,15 @@ export default function StepCounter({ steps, goal }: Props) {
     }).start();
   }, [steps]);
 
-  useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: pct,
-      duration: 800,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [pct]);
-
-  const progressDeg = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
   return (
-    <View style={styles.container}>
-      <View style={styles.ring}>
-        <View style={styles.bgRing} />
-
-        <Animated.View
-          style={[
-            styles.progressMask,
-            { transform: [{ rotateZ: progressDeg }] },
-          ]}
-        >
-          <View style={styles.progressHalf} />
-        </Animated.View>
-
-        {pct > 0.5 && (
-          <View style={styles.progressMaskFull}>
-            <View style={styles.progressHalf} />
-          </View>
-        )}
-
-        <View style={styles.inner}>
+    <View style={styles.outer}>
+      <View style={styles.progressFrame}>
+        {/* Yellow border that fills based on progress */}
+        <View style={[styles.progressBorder, { width: `${pct * 100}%` }]} />
+        <View style={styles.innerWhite}>
           <AnimatedNumber value={displayVal} />
-          <Text style={styles.label}>steps</Text>
-          <Text style={styles.goalText}>
-            {Math.round(pct * 100)}% of {goal.toLocaleString()}
+          <Text style={styles.goalLabel}>
+            STEPS OF {(goal / 1000).toFixed(0)}K
           </Text>
         </View>
       </View>
@@ -84,75 +53,45 @@ function AnimatedNumber({ value }: { value: Animated.Value }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
+  outer: {
     marginBottom: 24,
   },
-  ring: {
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bgRing: {
-    position: 'absolute',
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
-    borderWidth: STROKE,
-    borderColor: '#1e1e1e',
-  },
-  progressMask: {
-    position: 'absolute',
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
+  progressFrame: {
+    aspectRatio: 1,
+    width: '100%',
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 16,
+    position: 'relative',
     overflow: 'hidden',
   },
-  progressMaskFull: {
+  progressBorder: {
     position: 'absolute',
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
-    overflow: 'hidden',
-    transform: [{ rotateZ: '180deg' }],
+    top: 0,
+    left: 0,
+    bottom: 0,
+    backgroundColor: colors.primary,
+    zIndex: 0,
   },
-  progressHalf: {
-    position: 'absolute',
-    width: RING_SIZE,
-    height: RING_SIZE / 2,
-    borderTopLeftRadius: RING_SIZE / 2,
-    borderTopRightRadius: RING_SIZE / 2,
-    borderWidth: STROKE,
-    borderBottomWidth: 0,
-    borderColor: '#7c83ff',
-  },
-  inner: {
-    width: RING_SIZE - STROKE * 2 - 8,
-    height: RING_SIZE - STROKE * 2 - 8,
-    borderRadius: (RING_SIZE - STROKE * 2 - 8) / 2,
-    backgroundColor: '#0a0a0a',
+  innerWhite: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    margin: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2,
+    zIndex: 1,
   },
   count: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
+    fontFamily: fonts.mono,
+    fontSize: 56,
+    color: colors.text,
   },
-  label: {
-    color: '#888',
+  goalLabel: {
+    fontFamily: fonts.monoMedium,
     fontSize: 13,
-    textTransform: 'uppercase',
+    color: colors.textMuted,
     letterSpacing: 1,
-    marginTop: 2,
-  },
-  goalText: {
-    color: '#555',
-    fontSize: 11,
     marginTop: 4,
   },
 });

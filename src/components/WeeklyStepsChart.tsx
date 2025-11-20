@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors, fonts, border } from '../theme';
 
 type DayData = {
   label: string;
@@ -18,7 +19,7 @@ export default function WeeklyStepsChart({ data, goal }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>This Week</Text>
+      <Text style={styles.title}>THIS WEEK</Text>
       <View style={styles.chart}>
         {data.map((day, i) => {
           const height = maxVal > 0 ? (day.steps / maxVal) * BAR_MAX_HEIGHT : 0;
@@ -37,7 +38,7 @@ export default function WeeklyStepsChart({ data, goal }: Props) {
                     styles.bar,
                     {
                       height: Math.max(height, 2),
-                      backgroundColor: hitGoal ? '#4ade80' : '#7c83ff',
+                      backgroundColor: hitGoal ? colors.primary : colors.text,
                     },
                   ]}
                 />
@@ -61,18 +62,16 @@ export default function WeeklyStepsChart({ data, goal }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#161616',
-    borderRadius: 14,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#222',
   },
   title: {
-    color: '#888',
-    fontSize: 13,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: colors.textMuted,
     marginBottom: 16,
   },
   chart: {
@@ -86,30 +85,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   value: {
-    color: '#666',
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
     fontSize: 9,
     marginBottom: 4,
-    fontVariant: ['tabular-nums'],
   },
   barTrack: {
     width: 20,
     height: BAR_MAX_HEIGHT,
     justifyContent: 'flex-end',
-    borderRadius: 4,
     overflow: 'hidden',
   },
   bar: {
     width: 20,
-    borderRadius: 4,
   },
   dayLabel: {
-    color: '#666',
+    fontFamily: fonts.bodyMedium,
+    color: colors.textMuted,
     fontSize: 11,
     marginTop: 6,
-    fontWeight: '500',
   },
   dayLabelHit: {
-    color: '#4ade80',
+    color: colors.text,
   },
   goalLine: {
     flexDirection: 'row',
@@ -122,10 +119,11 @@ const styles = StyleSheet.create({
     height: 1,
     borderStyle: 'dashed',
     borderWidth: 0.5,
-    borderColor: '#444',
+    borderColor: colors.borderLight,
   },
   goalLabel: {
-    color: '#555',
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
     fontSize: 11,
   },
 });

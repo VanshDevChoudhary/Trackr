@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { HealthWorkout } from '../bridges/types';
+import { colors, fonts, border } from '../theme';
 
 type Props = {
   workout: HealthWorkout;
@@ -28,13 +29,13 @@ export default function ImportableWorkoutCard({ workout, onImport }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.info}>
-        <Text style={styles.type}>{workout.type}</Text>
+        <Text style={styles.type}>{workout.type.toUpperCase()}</Text>
         <Text style={styles.details}>
           {dateStr} at {timeStr} · {formatDuration(workout.duration)} · {workout.calories} cal
         </Text>
       </View>
       <Pressable style={styles.importBtn} onPress={onImport}>
-        <Text style={styles.importText}>Import</Text>
+        <Text style={styles.importText}>IMPORT</Text>
       </Pressable>
     </View>
   );
@@ -44,36 +45,38 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161616',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#2a2a3a',
+    backgroundColor: colors.surface,
+    borderWidth: border.width,
+    borderColor: colors.border,
+    padding: 16,
+    marginBottom: -border.width,
   },
   info: {
     flex: 1,
   },
   type: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-    textTransform: 'capitalize',
+    fontFamily: fonts.bodySemiBold,
+    color: colors.text,
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
   details: {
-    color: '#888',
-    fontSize: 12,
+    fontFamily: fonts.monoMedium,
+    color: colors.textMuted,
+    fontSize: 11,
     marginTop: 3,
   },
   importBtn: {
-    backgroundColor: '#7c83ff',
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderWidth: border.width,
+    borderColor: colors.border,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   importText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
+    color: colors.text,
+    fontSize: 10,
+    letterSpacing: 1.5,
   },
 });

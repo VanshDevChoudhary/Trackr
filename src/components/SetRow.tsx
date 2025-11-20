@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { colors, fonts, border } from '../theme';
 
 type Props = {
   index: number;
@@ -18,41 +19,30 @@ export default function SetRow({
   onRepsChange, onWeightChange, onToggle, onRemove,
 }: Props) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.setNum}>{index + 1}</Text>
+    <View style={[styles.row, completed && styles.rowCompleted]}>
+      <Text style={styles.setNum}>{String(index + 1).padStart(2, '0')}</Text>
 
-      <TextInput
-        style={styles.input}
-        value={reps}
-        onChangeText={onRepsChange}
-        placeholder="0"
-        placeholderTextColor="#555"
-        keyboardType="number-pad"
-        returnKeyType="done"
-      />
-      <Text style={styles.label}>reps</Text>
+      <Text style={styles.prevLabel}>—</Text>
 
       <TextInput
         style={styles.input}
         value={weight}
         onChangeText={onWeightChange}
         placeholder="0"
-        placeholderTextColor="#555"
+        placeholderTextColor={colors.textLight}
         keyboardType="decimal-pad"
         returnKeyType="done"
       />
-      {/* TODO: pull unit from user preferences (kg/lbs) */}
-      <Text style={styles.label}>kg</Text>
 
-      <Pressable onPress={() => { onToggle(); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }} style={styles.checkWrap}>
-        <View style={[styles.check, completed && styles.checkDone]}>
-          {completed && <Text style={styles.checkMark}>✓</Text>}
-        </View>
-      </Pressable>
-
-      <Pressable onPress={onRemove} hitSlop={8}>
-        <Text style={styles.remove}>×</Text>
-      </Pressable>
+      <TextInput
+        style={styles.input}
+        value={reps}
+        onChangeText={onRepsChange}
+        placeholder="--"
+        placeholderTextColor={colors.textLight}
+        keyboardType="number-pad"
+        returnKeyType="done"
+      />
     </View>
   );
 }
@@ -61,56 +51,36 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    gap: 6,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
+  },
+  rowCompleted: {
+    backgroundColor: '#fefce8',
   },
   setNum: {
-    color: '#666',
-    fontSize: 13,
-    width: 18,
-    textAlign: 'center',
+    fontFamily: fonts.mono,
+    color: colors.text,
+    fontSize: 14,
+    width: 36,
+  },
+  prevLabel: {
+    fontFamily: fonts.monoMedium,
+    color: colors.textLight,
+    fontSize: 12,
+    flex: 1,
   },
   input: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 8,
-    color: '#fff',
+    borderWidth: border.width,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    color: colors.text,
+    fontFamily: fonts.mono,
     fontSize: 15,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    width: 56,
+    width: 72,
     textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-  },
-  label: {
-    color: '#666',
-    fontSize: 12,
-  },
-  checkWrap: {
-    marginLeft: 'auto',
-    paddingHorizontal: 4,
-  },
-  check: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkDone: {
-    backgroundColor: '#4ade80',
-    borderColor: '#4ade80',
-  },
-  checkMark: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  remove: {
-    color: '#555',
-    fontSize: 20,
-    paddingHorizontal: 4,
   },
 });
