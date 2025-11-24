@@ -82,7 +82,7 @@ HealthBridge.subscribeToSteps(callback)
 
 Five methods, one subscription. That's the entire native surface area. Components import `HealthBridge` and never know which OS they're running on.
 
-Full architecture: [docs/NATIVE_BRIDGE.md](docs/NATIVE_BRIDGE.md)
+The native bridge code lives in `modules/health-bridge/` — Swift for iOS, Kotlin for Android.
 
 ### 2. Offline-First Sync Engine
 
@@ -97,7 +97,7 @@ Version vectors encode causal ordering — they tell you whether two edits are s
 | Profile edits | Last-write-wins |
 | Workouts | Device-of-origin wins |
 
-Design doc: [docs/SYNC_ENGINE.md](docs/SYNC_ENGINE.md)
+The sync engine implementation is in `src/sync/engine.ts`.
 
 ---
 
@@ -126,11 +126,11 @@ Design doc: [docs/SYNC_ENGINE.md](docs/SYNC_ENGINE.md)
         └─────────────┘
 ```
 
-Docs:
-- [NATIVE_BRIDGE.md](docs/NATIVE_BRIDGE.md) — health data architecture and platform quirks
-- [SYNC_ENGINE.md](docs/SYNC_ENGINE.md) — version vectors, conflict resolution, sync protocol
-- [API_SPEC.md](docs/API_SPEC.md) — server endpoint reference
-- [DB_SCHEMA.md](docs/DB_SCHEMA.md) — Realm and MongoDB schemas
+Key entry points:
+- `modules/health-bridge/` — native Swift + Kotlin health modules
+- `src/sync/engine.ts` — version vector sync engine
+- `server/src/routes/` — Express API endpoints
+- `src/db/` — Realm schemas and write helpers
 
 ---
 

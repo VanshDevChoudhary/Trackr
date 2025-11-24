@@ -46,6 +46,4 @@ server/dist/
 
 # native module build artifacts
 modules/**/build/
-CLAUDE.md
-docs/CC_PROMPTS.md
-docs/project-opsec-checklist.md
+
